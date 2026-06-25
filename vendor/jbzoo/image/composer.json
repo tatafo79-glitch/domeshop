@@ -1,0 +1,71 @@
+{
+    "name"              : "jbzoo/image",
+    "type"              : "library",
+    "description"       : "A PHP class that simplifies working with images",
+    "license"           : "MIT",
+    "keywords"          : [
+        "image",
+        "resize",
+        "images",
+        "jbzoo",
+        "crop",
+        "filters",
+        "thumbnail",
+        "watermark",
+        "gd"
+    ],
+    "authors"           : [
+        {
+            "name"  : "Denis Smetannikov",
+            "email" : "admin@jbzoo.com",
+            "role"  : "lead"
+        },
+        {
+            "name"     : "Cory LaViska",
+            "homepage" : "https://www.abeautifulsite.net/",
+            "role"     : "Developer"
+        },
+        {
+            "name"     : "Nazar Mokrynskyi",
+            "email"    : "nazar@mokrynskyi.com",
+            "homepage" : "https://cleverstyle.org/",
+            "role"     : "Developer"
+        }
+    ],
+
+    "minimum-stability" : "dev",
+    "prefer-stable"     : true,
+
+    "require"           : {
+        "php"         : "^8.2",
+        "ext-gd"      : "*",
+        "ext-exif"    : "*",
+        "ext-ctype"   : "*",
+
+        "jbzoo/utils" : "^7.3",
+        "jbzoo/data"  : "^7.2"
+    },
+
+    "require-dev"       : {
+        "jbzoo/toolbox-dev" : "^7.2"
+    },
+
+    "autoload"          : {
+        "psr-4" : {"JBZoo\\Image\\" : "src"}
+    },
+
+    "autoload-dev"      : {
+        "psr-4" : {"JBZoo\\PHPUnit\\" : "tests"}
+    },
+
+    "config"            : {
+        "optimize-autoloader" : true,
+        "allow-plugins"       : {"composer/package-versions-deprecated" : true}
+    },
+
+    "extra"             : {
+        "branch-alias" : {
+            "dev-master" : "7.x-dev"
+        }
+    }
+}

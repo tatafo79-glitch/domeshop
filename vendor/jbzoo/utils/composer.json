@@ -1,0 +1,97 @@
+{
+    "name"              : "jbzoo/utils",
+    "type"              : "library",
+    "description"       : "Collection of PHP functions, mini classes and snippets for everyday developer's routine life.",
+    "license"           : "MIT",
+    "keywords"          : [
+        "helpers",
+        "helper",
+        "utility",
+        "utils",
+        "collection",
+        "environment",
+        "image",
+        "filesystem",
+        "array",
+        "cli",
+        "command line",
+        "dates",
+        "email",
+        "env",
+        "filter",
+        "http",
+        "url",
+        "serialize",
+        "slugify",
+        "string",
+        "mbstring",
+        "timer",
+        "misc"
+    ],
+    "minimum-stability" : "dev",
+    "prefer-stable"     : true,
+
+    "authors"           : [
+        {
+            "name"  : "Denis Smetannikov",
+            "email" : "admin@jbzoo.com",
+            "role"  : "lead"
+        },
+        {
+            "name"  : "Brandon Wamboldt",
+            "email" : "brandon.wamboldt@gmail.com"
+        },
+        {
+            "name"  : "Luís Nóbrega",
+            "email" : "luis.barros.nobrega@gmail.com"
+        }
+    ],
+
+    "require"           : {
+        "php" : "^8.2"
+    },
+
+    "require-dev"       : {
+        "jbzoo/toolbox-dev" : "^7.2",
+        "jbzoo/data"        : "^7.2",
+        "symfony/process"   : ">=7.3.4"
+    },
+
+    "suggest"           : {
+        "ext-mbstring"              : "Provides multibyte specific string functions",
+        "symfony/process"           : "For Cli::exec() method only",
+        "symfony/polyfill-mbstring" : "For UTF-8 if ext-mbstring disabled",
+        "jbzoo/data"                : ">=4.0",
+        "ext-intl"                  : "*",
+        "ext-posix"                 : "*",
+        "ext-filter"                : "*",
+        "ext-dom"                   : "*",
+        "ext-gd"                    : "*"
+    },
+
+    "autoload"          : {
+        "psr-4" : {"JBZoo\\Utils\\" : "src"},
+        "files" : [
+            "src/defines.php",
+            "src/aliases.php"
+        ]
+
+    },
+
+    "autoload-dev"      : {
+        "psr-4" : {"JBZoo\\PHPUnit\\" : "tests"}
+    },
+
+    "config"            : {
+        "optimize-autoloader" : true,
+        "allow-plugins"       : {
+            "composer/package-versions-deprecated" : true
+        }
+    },
+
+    "extra"             : {
+        "branch-alias" : {
+            "dev-master" : "7.x-dev"
+        }
+    }
+}

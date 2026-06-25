@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  {% block header %}
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Domemall Admin{% endblock %}</title>
+  <meta name="admin-dir" content="dmmt">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { font-size: 13px; }
+    body { margin: 0; font-family: Pretendard, ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+    button, input, select, textarea { font: inherit; }
+    [x-cloak] { display: none !important; }
+    .admin-outline-nav-text { font-size: 14px; font-weight: 500; }
+    .admin-outline-nav-submenu-link { font-size: 13px; }
+    .admin-outline-page-title { font-size: 16px; font-weight: 700; }
+    .admin-outline-profile-name { font-size: 14px; font-weight: 500; }
+  </style>
+  <link href="/dist/basic/css/admin.css?v=19" rel="stylesheet">
+  <script type="module" src="/dist/basic/js/vendor.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  {% block appScript %}{% endblock %}
+  {% endblock %}
+</head>
+<body class="admin-outline-body" x-data="{ sidebarOpen: false }">
+  {% block body %}
+  <div class="admin-outline-shell">
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="admin-outline-backdrop" @click="sidebarOpen = false"></div>
+
+    <aside :class="sidebarOpen ? 'is-open' : ''" class="admin-outline-sidebar">
+      <div class="admin-outline-logo">
+        <span class="admin-outline-logo-text">Domemall <span>Admin</span></span>
+      </div>
+      {{ include('outline/sidebar.html') }}
+    </aside>
+
+    <div class="admin-outline-content">
+      <header id="mainHeader" class="admin-outline-header">
+        <div class="admin-outline-header-title-wrap">
+          <button @click="sidebarOpen = true" class="admin-outline-menu-button" type="button" aria-label="硫붾돱 ?닿린">
+            <svg class="admin-outline-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+          <h2 class="admin-outline-page-title">{% block pageTitle %}{% endblock %}</h2>
+        </div>
+        {{ include('outline/header.html') }}
+      </header>
+
+      <main id="mainScrollArea" class="admin-outline-main">
+        <div class="admin-outline-main-inner">
+          {% block contents %}{% endblock %}
+        </div>
+        <footer class="admin-outline-footer">
+          {{ include('outline/footer.html') }}
+        </footer>
+      </main>
+    </div>
+  </div>
+  {% endblock %}
+</body>
+</html>
+
+

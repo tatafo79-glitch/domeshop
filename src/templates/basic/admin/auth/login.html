@@ -1,0 +1,115 @@
+{% extends "outline/base.html" %}
+
+{% block title %}Admin Login - {{ setting.app_name }} B2B{% endblock %}
+
+{% block appScript %}
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/member/login.js?v=2"></script>
+{% endblock %}
+
+{% block body %}
+<div class="admin-member-login">
+  <section class="admin-member-login-brand" aria-label="Admin sign in information">
+    <div class="admin-member-login-brand-glow admin-member-login-brand-glow-blue" aria-hidden="true"></div>
+    <div class="admin-member-login-brand-glow admin-member-login-brand-glow-indigo" aria-hidden="true"></div>
+
+    <div class="admin-member-login-brand-inner">
+      <div class="admin-member-login-brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+      </div>
+      <h1 class="admin-member-login-brand-title">
+        Domemall<br>
+        <span>B2B Management</span>
+      </h1>
+      <p class="admin-member-login-brand-desc">
+        엔터프라이즈급 배송대행 및 도매 유통 관리를 위한 통합 관리자 시스템입니다. 안전하고 신속한 업무 처리를 지원합니다.
+      </p>
+    </div>
+  </section>
+
+  <main class="admin-member-login-form-side">
+    <div class="admin-member-login-form-wrap">
+      <div class="admin-member-login-mobile-brand">
+        <div class="admin-member-login-mobile-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <h2>{{ setting.app_name }} Admin</h2>
+      </div>
+
+      <div class="admin-member-login-head">
+        <h2>&#54872;&#50689;&#54633;&#45768;&#45796;</h2>
+        <p>&#44228;&#49549;&#54616;&#47140;&#47732; &#44288;&#47532;&#51088; &#44228;&#51221;&#51004;&#47196; &#47196;&#44536;&#51064;&#54644; &#51452;&#49464;&#50836;.</p>
+      </div>
+
+      {% if error_message %}
+      <div class="admin-member-login-alert" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p>{{ error_message }}</p>
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/{{ setting.site.admin_directory }}/login" id="adminLoginForm" class="admin-member-login-form" novalidate>
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+
+        <div class="admin-member-login-field" data-field="admin_id">
+          <label for="admin_id">&#50500;&#51060;&#46356;</label>
+          <div class="admin-member-login-input-wrap">
+            <span class="admin-member-login-input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </span>
+            <input class="admin-member-login-input" type="text" id="admin_id" name="admin_id" required aria-required="true" placeholder="&#44288;&#47532;&#51088; &#50500;&#51060;&#46356; &#51077;&#47141;" autocomplete="username" value="{{ saved_id }}">
+          </div>
+          <p id="admin_id_error" class="admin-member-login-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            &#50500;&#51060;&#46356;&#47484; &#51077;&#47141;&#54644; &#51452;&#49464;&#50836;.
+          </p>
+        </div>
+
+        <div class="admin-member-login-field" data-field="password">
+          <label for="password">&#48708;&#48128;&#48264;&#54840;</label>
+          <div class="admin-member-login-input-wrap">
+            <span class="admin-member-login-input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </span>
+            <input class="admin-member-login-input" type="password" id="password" name="password" required aria-required="true" placeholder="&#48708;&#48128;&#48264;&#54840; &#51077;&#47141;" autocomplete="current-password">
+          </div>
+          <p id="password_error" class="admin-member-login-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            &#48708;&#48128;&#48264;&#54840;&#47484; &#51077;&#47141;&#54644; &#51452;&#49464;&#50836;.
+          </p>
+        </div>
+
+        <div class="admin-member-login-options">
+          <label class="admin-member-login-check">
+            <span class="admin-member-login-check-box">
+              <input id="remember_me" name="remember_me" type="checkbox" {% if saved_id %}checked{% endif %}>
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+              </svg>
+            </span>
+            <span>&#50500;&#51060;&#46356; &#51200;&#51109;</span>
+          </label>
+        </div>
+
+        <button type="submit" class="admin-member-login-submit">&#47196;&#44536;&#51064;</button>
+      </form>
+
+      <p class="admin-member-login-copy">&copy; 2026 {{ setting.app_name }}. All rights reserved.</p>
+    </div>
+  </main>
+</div>
+{% endblock %}

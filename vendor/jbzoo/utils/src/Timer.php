@@ -1,0 +1,89 @@
+<?php
+
+/**
+ * JBZoo Toolbox - Utils.
+ *
+ * This file is part of the JBZoo Toolbox project.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license    MIT
+ * @copyright  Copyright (C) JBZoo.com, All rights reserved.
+ * @see        https://github.com/JBZoo/Utils
+ */
+
+declare(strict_types=1);
+
+namespace JBZoo\Utils;
+
+/**
+ * @see https://github.com/sebastianbergmann/php-timer
+ * @psalm-suppress UnusedClass
+ */
+final class Timer
+{
+    /**
+     * Formats the elapsed time as a string.
+     */
+    public static function format(float $milliSeconds): string
+    {
+        $times = [
+            'hour' => 60 * 60 * 1000,
+            'min'  => 60 * 1000,
+            'sec'  => 1000,
+        ];
+
+        $time     = \round($milliSeconds * 1000);
+        $minValue = 1.0;
+
+        foreach ($times as $unit => $value) {
+            if ($time >= $value) {
+                $time = \floor($time / $value * 100.0) / 100.0;
+
+                return $time . ' ' . $unit . ($time === $minValue ? '' : 's');
+            }
+        }
+
+        return $time . ' ms';
+    }
+
+    /**
+     * Formats the elapsed time as a string.
+     */
+    public static function formatMS(float $seconds): string
+    {
+        $time = \round($seconds * 1000, 3);
+        $dec  = 3;
+
+        $decLevel01  = 0.1;
+        $decLevel0   = 0;
+        $decLevel1   = 1;
+        $decLevel10  = 10;
+        $decLevel100 = 100;
+
+        if ($time === 0.0 || $time >= $decLevel10 || $time >= $decLevel100) {
+            $dec = $decLevel0;
+        } elseif ($time >= $decLevel01) {
+            $dec = $decLevel1;
+        }
+
+        return \number_format($time, $dec, '.', ' ') . ' ms';
+    }
+
+    /**
+     * Formats the elapsed time since the start of the request as a string.
+     */
+    public static function timeSinceStart(): float
+    {
+        return \microtime(true) - self::getRequestTime();
+    }
+
+    /**
+     * Get request time in microseconds.
+     * @SuppressWarnings(PHPMD.Superglobals)
+     */
+    public static function getRequestTime(): float
+    {
+        return $_SERVER['REQUEST_TIME_FLOAT'] ?? 0.0;
+    }
+}

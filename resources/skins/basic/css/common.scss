@@ -1,0 +1,240 @@
+@import url("tailwindcss");
+
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../assets/fonts/Pretendard-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../assets/fonts/Pretendard-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../assets/fonts/Pretendard-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NotoSansKR';
+  src: url("../assets/fonts/NotoSansKR-Regular.woff2") format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url("../assets/fonts/Roboto-Bold.woff2") format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme{
+  --color-primary: #1e293b;
+  --color-secondary: #334155;
+  --color-accent: #3b82f6;
+  --color-main-bg: #f8fafc;
+  --color-text-main: #dc2626;
+  --color-border-base: #e2e8f0;
+  --color-input-border-base: #cbd5e1;
+
+  // 1. Default / Neutral (기본 / 취소 / 회색 버튼)
+  --color-default: #64748b;
+  --color-default-hover: #475569;
+  --color-default-bg: #f1f5f9;      /* 연한 회색 배경 (목록 헤더 등) */
+
+  // 2. Info / Accent (정보 / 일반 확인 / 블루)
+  --color-info: #3b82f6;
+  --color-info-hover: #2563eb;
+  --color-info-bg: #eff6ff;         /* 연한 블루 배경 (안내 팝업 등) */
+
+  // 3. Success (성공 / 등록 / 완료 / 그린)
+  --color-success: #10b981;
+  --color-success-hover: #059669;
+  --color-success-bg: #ecfdf5;      /* 연한 그린 배경 (재고 있음, 답변 완료 배지 등) */
+
+  // 4. Warning (경고 / 대기 / 업데이트 / 오렌지·옐로우)
+  --color-warning: #f59e0b;
+  --color-warning-hover: #d97706;
+  --color-warning-bg: #fffbeb;      /* 연한 옐로우 배경 (결제 대기, 검수 중 배지 등) */
+
+  // 5. Danger / Error (위험 / 삭제 / 실패 / 레드)
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-danger-bg: #fef2f2;       /* 연한 레드 배경 (품절, 삭제 경고창 등) */
+
+  // 6. cancel
+  --color-cancel: #ffffff;
+  --color-cancel-hover: #f7f7f7;
+  --color-cancel-bg: #fef5f5;       /* 연한 레드 배경 (품절, 삭제 경고창 등) */
+
+  --spacing-sidebar: 260px;
+  --spacing-header: 64px;
+
+  --font-sans: 'Pretendard', ui-sans-serif, system-ui, sans-serif;
+  --font-roboto: 'Roboto', sans-serif;
+  //--font-sans: 'NotoSansKR', ui-sans-serif, system-ui, sans-serif;
+
+  /* 폰트 사이즈 재정의 (1rem = 13px 기준) */
+  --font-size-xs: 0.846rem;   /* 약 11px */
+  --font-size-sm: 0.923rem;   /* 약 12px */
+  --font-size-base: 1rem;     /* 13px (기본) */
+  --font-size-lg: 1.0769rem;   /* 약 14px */
+  --font-size-xl: 1.2308rem;   /* 약 16px (로고용) */
+  --font-size-2xl: 1.3846rem;   /* 약 18px (로고용) */
+  --font-size-3xl: 1.5385rem;   /* 약 20px (로고용) */
+}
+
+@layer base {
+  .form-radio {
+    @apply flex items-center bg-(--color-border-base);
+    height: 34.5px;
+    padding:1px;
+    gap: 1px;
+
+    & > input {
+      @apply hidden;
+
+      &:checked + label {
+        @apply bg-accent text-white;
+      }
+    }
+
+    & > label {
+      @apply cursor-pointer flex bg-white px-8 items-center justify-center;
+      height: 100%;
+    }
+
+    @media (max-width: 768px) {
+      @apply flex-1;
+
+      & > label {
+        @apply flex-1;
+      }
+    }
+  }
+
+  .form-select {
+    @apply flex flex-1 items-center;
+    height: 34.5px;
+
+    & > select {
+      height: 34.5px;
+
+      &:not(:first-child) {
+        @apply ml-4;
+      }
+    }
+
+    @media (max-width: 768px) {
+      @apply flex-col;
+      height: auto;
+
+      & > select {
+        @apply ml-0! w-full;
+
+        &:not(:first-child) {
+        @apply mt-2;
+      }
+      }
+    }
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-sm;
+  }
+
+  .form-input {
+    @apply flex flex-1;
+
+    & > label {
+      @apply border border-border-base border-l-0 px-3 flex items-center;
+      height: 34.5px;
+    }
+
+    @media (max-width: 768px) {
+      & > input {
+        @apply w-full!;
+      }
+    }
+  }
+
+  input:not([type="radio"]):not([type="checkbox"]) {
+    @apply p-2;
+    border: 1px solid var(--color-border-base) !important;
+    width: 80%;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+
+    @media (min-width: 769px) and (max-width: 1347px) {
+      width: 100%;
+    }
+  }
+
+  select {
+    border: 1px solid var(--color-border-base) !important;
+  }
+
+  /* 숫자 입력창 상하 화살표(스피너) 숨김 처리 */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+  }
+}
+
+@layer components {
+  .btn {
+    /* 13px 기준에 맞춘 패딩 값과 기본 속성 정의 */
+    @apply px-6 py-3 rounded-lg cursor-pointer transition-colors duration-200 inline-flex items-center justify-center;
+
+    &.info {
+      @apply bg-info text-white hover:bg-info-hover;
+    }
+
+    &.success {
+      @apply bg-success text-blue-500 hover:bg-success-hover;
+    }
+
+    &.danger {
+      @apply bg-danger text-white hover:bg-danger-hover;
+    }
+
+    &.warning {
+      @apply bg-warning text-white hover:bg-warning-hover;
+    }
+
+    &.default {
+      @apply bg-default text-white hover:bg-default-hover;
+    }
+
+    &.cancel {
+      @apply bg-cancel text-primary hover:bg-cancel-hover;
+
+      border: 1px solid var(--color-border-base) !important;
+    }
+  }
+}
+
+/* SunEditor Custom Overrides (Global) */
+.se-find-replace { display: none !important; }
+.se-drag-handle { display: none !important; }
+.se-status-bar { display: none !important; }
+.sun-editor textarea:focus, .se-code-wrapper textarea:focus { outline: none !important; box-shadow: none !important; border: none !important; --tw-ring-color: transparent !important; }
+svg.se-ci.se-ci { max-width: 24px; max-height: 24px; }

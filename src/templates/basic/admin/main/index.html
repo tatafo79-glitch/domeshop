@@ -1,0 +1,145 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}대시보드{% endblock %}
+
+{% block contents %}
+<section class="admin-dashboard">
+  <div class="admin-dashboard-summary">
+    <p class="admin-page-desc">오늘의 주문, 매출, 문의 현황을 빠르게 확인하세요.</p>
+    <div class="admin-dashboard-actions">
+      <a href="/dmmt/order/lists" class="admin-btn-secondary">주문 확인</a>
+      <a href="/dmmt/goods" class="admin-btn-primary">상품 관리</a>
+    </div>
+  </div>
+
+  <div class="admin-dashboard-stat-grid">
+    <article class="admin-dashboard-stat-card">
+      <div class="admin-dashboard-stat-head">
+        <h3 class="admin-dashboard-stat-title">오늘 매출</h3>
+        <span class="admin-dashboard-stat-icon is-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v-1m9-4a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </span>
+      </div>
+      <strong class="admin-dashboard-stat-value">₩2,200,000</strong>
+      <p class="admin-dashboard-stat-change is-up">전일 대비 12% 상승</p>
+    </article>
+
+    <article class="admin-dashboard-stat-card">
+      <div class="admin-dashboard-stat-head">
+        <h3 class="admin-dashboard-stat-title">신규 주문</h3>
+        <span class="admin-dashboard-stat-icon is-indigo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+          </svg>
+        </span>
+      </div>
+      <strong class="admin-dashboard-stat-value">15건</strong>
+      <p class="admin-dashboard-stat-change is-up">전일 대비 3건 증가</p>
+    </article>
+
+    <article class="admin-dashboard-stat-card">
+      <div class="admin-dashboard-stat-head">
+        <h3 class="admin-dashboard-stat-title">신규 회원</h3>
+        <span class="admin-dashboard-stat-icon is-emerald">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3M15 7a3 3 0 11-6 0 3 3 0 016 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+          </svg>
+        </span>
+      </div>
+      <strong class="admin-dashboard-stat-value">4명</strong>
+      <p class="admin-dashboard-stat-change">전일 동일</p>
+    </article>
+
+    <article class="admin-dashboard-stat-card is-alert">
+      <div class="admin-dashboard-stat-head">
+        <h3 class="admin-dashboard-stat-title">처리 대기 문의</h3>
+        <span class="admin-dashboard-stat-icon is-rose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+          </svg>
+        </span>
+      </div>
+      <strong class="admin-dashboard-stat-value">7건</strong>
+      <p class="admin-dashboard-stat-change is-danger">긴급 처리 필요</p>
+    </article>
+  </div>
+
+  <div class="admin-dashboard-grid">
+    <section class="admin-dashboard-panel admin-dashboard-sales">
+      <div class="admin-dashboard-panel-head">
+        <h3 class="admin-dashboard-panel-title">주간 매출 흐름</h3>
+        <span class="admin-dashboard-panel-meta">최근 7일</span>
+      </div>
+      <div class="admin-dashboard-chart" aria-label="주간 매출 차트">
+        <div class="admin-dashboard-chart-item"><span style="height: 48%"></span><em>월</em></div>
+        <div class="admin-dashboard-chart-item"><span style="height: 64%"></span><em>화</em></div>
+        <div class="admin-dashboard-chart-item"><span style="height: 52%"></span><em>수</em></div>
+        <div class="admin-dashboard-chart-item"><span style="height: 72%"></span><em>목</em></div>
+        <div class="admin-dashboard-chart-item"><span style="height: 88%"></span><em>금</em></div>
+        <div class="admin-dashboard-chart-item"><span style="height: 58%"></span><em>토</em></div>
+        <div class="admin-dashboard-chart-item is-today"><span style="height: 76%"></span><em>일</em></div>
+      </div>
+    </section>
+
+    <section class="admin-dashboard-panel">
+      <div class="admin-dashboard-panel-head">
+        <h3 class="admin-dashboard-panel-title">주문 처리 현황</h3>
+        <a href="/dmmt/order/lists" class="admin-dashboard-panel-link">전체 보기</a>
+      </div>
+      <div class="admin-dashboard-status-list">
+        <div class="admin-dashboard-status-item"><span>결제 완료</span><strong>18</strong></div>
+        <div class="admin-dashboard-status-item"><span>상품 준비</span><strong>11</strong></div>
+        <div class="admin-dashboard-status-item"><span>배송 진행</span><strong>24</strong></div>
+        <div class="admin-dashboard-status-item"><span>취소 요청</span><strong class="is-danger">3</strong></div>
+        <div class="admin-dashboard-status-item"><span>반품 요청</span><strong class="is-danger">2</strong></div>
+        <div class="admin-dashboard-status-item"><span>교환 요청</span><strong class="is-danger">1</strong></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="admin-dashboard-panel">
+    <div class="admin-dashboard-panel-head">
+      <h3 class="admin-dashboard-panel-title">최근 주문</h3>
+      <a href="/dmmt/order/lists" class="admin-dashboard-panel-link">주문 관리로 이동</a>
+    </div>
+    <div class="admin-dashboard-table-wrap">
+      <table class="admin-dashboard-table">
+        <thead>
+          <tr>
+            <th>주문번호</th>
+            <th>회원</th>
+            <th>상품</th>
+            <th>금액</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DM20260624-0015</td>
+            <td>서울유통</td>
+            <td>생활용품 패키지</td>
+            <td>₩352,000</td>
+            <td><span class="admin-dashboard-badge is-blue">결제 완료</span></td>
+          </tr>
+          <tr>
+            <td>DM20260624-0014</td>
+            <td>코리아마켓</td>
+            <td>주방잡화 세트</td>
+            <td>₩128,000</td>
+            <td><span class="admin-dashboard-badge is-slate">상품 준비</span></td>
+          </tr>
+          <tr>
+            <td>DM20260624-0013</td>
+            <td>온채널몰</td>
+            <td>디지털 액세서리</td>
+            <td>₩89,500</td>
+            <td><span class="admin-dashboard-badge is-emerald">배송 진행</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

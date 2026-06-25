@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "allowUmdGlobalAccess": true,
+    "rootDir": "./",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "resources/skins/basic/js/*"
+      ],
+      "@commons/*": [
+        "resources/skins/basic/js/commons/*"
+      ],
+    },
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "skipLibCheck": true,
+    "composite": false,
+    "noEmit": true
+  },
+  "include": [
+    "resources/skins/**/*.ts",
+    "resources/skins/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules/**/*",
+    ".vscode",
+    "**/*.log"
+  ]
+}

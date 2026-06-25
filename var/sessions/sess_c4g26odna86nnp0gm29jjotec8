@@ -1,0 +1,1 @@
+csrf|a:1:{s:17:"csrf6a3ca4b3356cd";s:32:"a53c1ffd1a3f7cbaef567870e620a59e";}admin|a:7:{s:2:"id";i:3;s:7:"user_id";s:5:"admin";s:4:"name";s:15:"최고관리자";s:4:"role";s:5:"ADMIN";s:8:"level_id";N;s:11:"permissions";a:0:{}s:8:"login_at";s:19:"2026-06-25 05:46:59";}
