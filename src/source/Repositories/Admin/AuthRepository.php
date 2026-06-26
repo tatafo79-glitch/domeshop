@@ -24,34 +24,25 @@ class AuthRepository extends BaseRepository
   }
 
   /**
-   * 로그인 실패 횟수를 1 증가시킨다.
+   * 로그인 실패 횟수를 원자적으로 누적하고 기준 초과 시 계정을 잠근다.
    *
    * @param int $adminId 관리자 ID
-   *
-   * @return bool
-   */
-  public function increaseLoginFailCount(int $adminId): bool
-  {
-    return $this->db->execute(
-      'UPDATE members SET login_fail_count = login_fail_count + 1 WHERE id = ?',
-      [$adminId]
-    );
-  }
-
-  /**
-   * 로그인 실패 횟수를 저장하고 계정을 잠근다.
-   *
-   * @param int $adminId 관리자 ID
-   * @param int $failCount 실패 횟수
+   * @param int $maxFailCount 잠금 기준 실패 횟수
    * @param string $lockedUntil 잠금 해제 시간
    *
    * @return bool
    */
-  public function lockAdmin(int $adminId, int $failCount, string $lockedUntil): bool
+  public function recordLoginFailure(int $adminId, int $maxFailCount, string $lockedUntil): bool
   {
     return $this->db->execute(
-      'UPDATE members SET login_fail_count = ?, locked_until = ? WHERE id = ?',
-      [$failCount, $lockedUntil, $adminId]
+      'UPDATE members
+       SET locked_until = CASE
+             WHEN login_fail_count + 1 >= ? THEN ?
+             ELSE locked_until
+           END,
+           login_fail_count = LEAST(login_fail_count + 1, ?)
+       WHERE id = ?',
+      [$maxFailCount, $lockedUntil, 255, $adminId]
     );
   }
 

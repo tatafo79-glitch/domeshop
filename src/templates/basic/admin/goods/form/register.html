@@ -1,0 +1,446 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}상품 등록{% endblock %}
+
+{% block contents %}
+<section class="admin-goods-register">
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">신규 상품의 카테고리, 기본 정보, 가격, 이미지, 옵션, 배송 정책과 상세 설명을 등록합니다.</p>
+    <a href="{{ previous_url|default('/' ~ setting.site.admin_directory ~ '/goods/lists') }}" class="admin-btn-secondary admin-goods-register-top-back">목록으로</a>
+  </div>
+
+  <form id="goodsRegisterForm" class="admin-goods-register-form" method="post" enctype="multipart/form-data" action="/{{ setting.site.admin_directory }}/goods/register" novalidate>
+    <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+    <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+    <input id="category_path" name="category_path" type="hidden" value="">
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">카테고리 검색 / 선택</h3>
+      </div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="categorySearchInput">카테고리 검색</label>
+          <div class="admin-form-content admin-goods-register-control is-stacked">
+            <div class="admin-goods-register-category-search">
+              <svg class="admin-goods-register-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input id="categorySearchInput" type="text" class="admin-input" autocomplete="off" placeholder="카테고리명을 입력하세요. 공백으로 단어를 구분하면 결과 내 재검색이 가능합니다.">
+              <div id="categorySearchResultLayer" class="admin-goods-register-category-results" hidden></div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">카테고리 선택<span class="admin-required-mark" aria-hidden="true">*</span></span>
+          <div class="admin-form-content admin-goods-register-category-content">
+            <div class="admin-goods-register-selected-category">
+              <svg class="admin-goods-register-selected-category-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              <span>선택된 카테고리 :</span>
+              <strong id="selectedCategoryText">없음</strong>
+            </div>
+            <div class="admin-goods-register-category-picker">
+              <div class="admin-goods-register-category-head">
+                <div>대분류</div>
+                <div>중분류</div>
+                <div>소분류</div>
+                <div>세분류</div>
+              </div>
+              <div class="admin-goods-register-category-cols">
+                <div id="catList1" class="admin-goods-register-category-col" data-category-depth="1"></div>
+                <div id="catList2" class="admin-goods-register-category-col" data-category-depth="2"></div>
+                <div id="catList3" class="admin-goods-register-category-col" data-category-depth="3"></div>
+                <div id="catList4" class="admin-goods-register-category-col" data-category-depth="4"></div>
+              </div>
+            </div>
+            <input type="hidden" name="category_id" id="selectedCategoryId" value="">
+          </div>
+        </div>
+      </div>
+      <script type="application/json" id="goodsCategoryData">{{ categories|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
+      <script type="application/json" id="goodsVendorData">{{ vendors|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
+      <script type="application/json" id="goodsOriginData">{{ origins|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
+    </section>
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">기본 정보</h3></div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="name">상품명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-control">
+            <input id="name" name="name" type="text" class="admin-input" maxlength="255" placeholder="판매사에게 노출될 상품명">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="invoice_name">택배송장명</label>
+          <div class="admin-form-content admin-goods-register-control">
+            <input id="invoice_name" name="invoice_name" type="text" class="admin-input" maxlength="255" placeholder="택배송장 출력용 상품명">
+          </div>
+        </div>
+        <div class="admin-form-row admin-goods-register-two-col-row">
+          <div class="admin-goods-register-half-row">
+            <label class="admin-form-label" for="vendor_code">공급사</label>
+            <div class="admin-form-content admin-goods-register-control is-stacked">
+              <div class="admin-goods-register-vendor-search">
+                <svg class="admin-goods-register-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input id="vendor_code" name="vendor_code" type="text" class="admin-input" maxlength="20" autocomplete="off" placeholder="공급사명 또는 공급사 코드 검색, 미입력 시 관리자 직영">
+                <div id="vendorSearchResultLayer" class="admin-goods-register-category-results" hidden></div>
+              </div>
+              <p class="admin-goods-register-help">※ 공급사 코드를 직접 입력하거나 검색 결과를 선택하세요. 비워두면 관리자 기본 코드로 등록됩니다.</p>
+            </div>
+          </div>
+          <div class="admin-goods-register-half-row">
+            <label class="admin-form-label" for="vendor_goods_code">업체 자체 상품코드</label>
+            <div class="admin-form-content admin-goods-register-control">
+              <input id="vendor_goods_code" name="vendor_goods_code" type="text" class="admin-input" maxlength="100" placeholder="공급사별 중복 불가">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="originDepth1">원산지<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-control is-stacked">
+            <input id="selectedOriginStr" name="origin" type="hidden" value="">
+            <div class="admin-goods-register-origin-wrapper is-initial">
+              <select id="originDepth1" class="admin-input" aria-label="원산지 구분"><option value="">원산지 선택</option></select>
+              <select id="originDepth2" class="admin-input" aria-label="원산지 2차 선택" hidden><option value="">지역선택</option></select>
+              <select id="originDepth3" class="admin-input" aria-label="원산지 3차 선택" hidden><option value="">시군구선택</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row admin-goods-register-two-col-row">
+          <div class="admin-goods-register-half-row">
+            <label class="admin-form-label" for="manufacturer">제조사<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-goods-register-control">
+              <input id="manufacturer" name="manufacturer" type="text" class="admin-input" maxlength="100" placeholder="제조사명">
+            </div>
+          </div>
+          <div class="admin-goods-register-half-row">
+            <label class="admin-form-label" for="brand">브랜드</label>
+            <div class="admin-form-content admin-goods-register-control">
+              <input id="brand" name="brand" type="text" class="admin-input" maxlength="100" placeholder="브랜드명">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">상품타입<span class="admin-required-mark" aria-hidden="true">*</span></span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-three" role="radiogroup" aria-label="상품타입">
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_type" value="NORMAL"><span>일반상품</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_type" value="HEALTH"><span>건강기능식품</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_type" value="MEDICAL"><span>의료기기</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">상품상태</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-three" role="radiogroup" aria-label="상품상태">
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_status" value="NEW" checked><span>신상품</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_status" value="USED"><span>중고상품</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="goods_status" value="REFURB"><span>리퍼상품</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">성인전용여부</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="성인전용여부">
+              <label class="admin-goods-register-radio"><input type="radio" name="adult_only" value="N" checked><span>전체 이용가</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="adult_only" value="Y"><span>성인전용</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="keywordTagInput">상품키워드<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-control is-stacked">
+            <input id="keywordsInput" name="search_keywords" type="hidden" value="">
+            <div class="admin-goods-register-keyword-input-row">
+              <input id="keywordTagInput" type="text" class="admin-input" maxlength="50" autocomplete="off" placeholder="키워드 입력 후 Enter (콤마 ','로 구분하여 다중 등록 가능 / 특수문자, 공백 불가)">
+              <button id="keywordAddBtn" type="button" class="admin-goods-register-keyword-add-button"><svg class="admin-goods-register-keyword-add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span>추가</span></button>
+            </div>
+            <div id="keywordTagsContainer" class="admin-goods-register-keyword-tags" aria-live="polite"></div>
+            <p class="admin-goods-register-help">※ 최소 5개 이상의 키워드를 입력해야 합니다. 키워드는 중복 등록되지 않습니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">판매 가격 정보</h3>
+      </div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">과세여부</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group" role="radiogroup" aria-label="과세여부">
+              <label class="admin-goods-register-radio"><input type="radio" name="tax_type" value="TAX" checked><span>과세</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="tax_type" value="FREE"><span>면세</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="supply_price">공급가<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-price-control">
+            <span class="admin-goods-register-unit-input"><input id="supply_price" name="supply_price" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="0"><span class="admin-goods-register-unit">원</span></span>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="sell_price">판매가<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-price-control">
+            <span class="admin-goods-register-unit-input"><input id="sell_price" name="sell_price" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="0"><span class="admin-goods-register-unit">원</span></span>
+            <button type="button" id="openMarginCalcBtn" class="admin-goods-register-margin-button"><svg class="admin-goods-register-margin-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span>마진 계산기</span></button>
+            <label class="admin-goods-register-inline-check"><input type="hidden" name="sell_price_fixed" value="N"><input type="checkbox" name="sell_price_fixed" value="Y"><span>판매가 고정</span></label>
+          </div>
+        </div>
+        <div class="admin-form-row admin-goods-register-price-policy-row">
+          <span class="admin-form-label">가격 정책</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="가격 정책">
+              <label class="admin-goods-register-radio"><input type="radio" name="price_policy" value="FREE" checked><span>가격자율</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="price_policy" value="COMPLY"><span>가격준수</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row" data-price-policy-field="COMPLY" hidden>
+          <label class="admin-form-label" for="compliance_price">준수가격<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-price-control">
+            <span class="admin-goods-register-unit-input"><input id="compliance_price" name="compliance_price" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="0"><span class="admin-goods-register-unit">원</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">재고 및 노출</h3>
+      </div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">재고 연동</span>
+          <div class="admin-form-content admin-goods-register-price-control">
+            <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="재고 연동">
+              <label class="admin-goods-register-radio"><input type="radio" name="stock_link" value="N" checked><span>사용안함</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="stock_link" value="Y"><span>재고연동</span></label>
+            </div>
+            <div id="stockWrapper" class="admin-goods-register-stock-wrapper" hidden>
+              <label class="admin-goods-register-inline-label" for="stock">재고 수량</label>
+              <span class="admin-goods-register-unit-input"><input id="stock" name="stock" type="text" inputmode="numeric" class="admin-input" value="0"><span class="admin-goods-register-unit">개</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">품절 여부</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="품절 여부">
+              <label class="admin-goods-register-radio"><input type="radio" name="soldout" value="0" checked><span>판매중</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="soldout" value="1"><span>품절</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">운영 상태</span>
+          <div class="admin-form-content admin-goods-register-checks">
+            <label class="admin-goods-register-check"><input type="hidden" name="is_display" value="N"><input type="checkbox" name="is_display" value="Y" checked><span>상품 노출</span></label>
+            <label class="admin-goods-register-check"><input type="hidden" name="is_exportable" value="N"><input type="checkbox" name="is_exportable" value="Y" checked><span>API/다운로드 허용</span></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">이미지 정보</h3>
+      </div>
+      <div class="admin-goods-register-image-body">
+        <div id="imageHiddenFields" class="admin-goods-register-hidden-fields">
+          <input type="hidden" name="thumbnail_url" value="">
+          {% for index in 1..9 %}<input type="hidden" name="goods_images[]" value="">{% endfor %}
+        </div>
+        <label class="admin-goods-register-image-dropzone" for="imageUploadInput">
+          <svg class="admin-goods-register-image-dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <strong>이미지를 선택하거나 끌어오세요.</strong>
+          <span>최대 10장 등록 가능, 첫 번째 이미지가 대표 썸네일로 사용됩니다.</span>
+        </label>
+        <input id="imageUploadInput" type="file" accept="image/*" multiple class="admin-goods-register-image-input">
+        <div id="imagePreviewContainer" class="admin-goods-register-image-preview-grid" aria-live="polite"></div>
+      </div>
+    </section>
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-goods-register-toggle-header">
+        <h3 class="admin-card-title">조합형 옵션 정보 (SKU)</h3>
+        <div class="admin-goods-register-mini-toggle" role="radiogroup" aria-label="옵션 사용 여부">
+          <label class="admin-goods-register-mini-radio"><input type="radio" name="has_option" value="Y" data-option-toggle aria-controls="goodsOptionPanel" aria-expanded="false"><span class="admin-goods-register-mini-radio-mark" aria-hidden="true"></span><span class="admin-goods-register-mini-radio-text">사용함</span></label>
+          <label class="admin-goods-register-mini-radio"><input type="radio" name="has_option" value="N" data-option-toggle checked aria-controls="goodsOptionPanel" aria-expanded="false"><span class="admin-goods-register-mini-radio-mark" aria-hidden="true"></span><span class="admin-goods-register-mini-radio-text">사용안함</span></label>
+        </div>
+      </div>
+      <div id="goodsOptionPanel" class="admin-goods-register-option-body is-hidden" data-option-title-row hidden aria-hidden="true">
+        <div id="optionTitleWrapper" class="admin-goods-register-option-title-grid">
+          <label class="admin-goods-register-field-block" for="optionTitle1"><span>옵션 분류명</span><input id="optionTitle1" name="option_title1" type="text" class="admin-input admin-goods-register-option-title-input" maxlength="100" placeholder="예: 색상 또는 색상,사이즈"></label>
+          <label id="optionItem1Wrapper" class="admin-goods-register-field-block" for="optionTitle2"><span id="optionItem1Label">옵션 항목명</span><input id="optionTitle2" name="option_title2" type="text" class="admin-input admin-goods-register-option-title-input" maxlength="100" placeholder="예: 빨강,파랑"></label>
+          <label id="optionItem2Wrapper" class="admin-goods-register-field-block is-hidden" for="optionTitle3"><span>옵션 항목명 2</span><input id="optionTitle3" name="option_title3" type="text" class="admin-input admin-goods-register-option-title-input" maxlength="100" placeholder="예: S,M,L"></label>
+        </div>
+        <div class="admin-goods-register-option-actions">
+          <button type="button" id="addOptionBtn" class="admin-btn-secondary admin-goods-register-option-action-button">적용</button>
+        </div>
+        <div class="admin-goods-register-table-wrap">
+          <table class="admin-goods-register-table admin-goods-register-option-table">
+            <thead>
+              <tr>
+                <th>옵션값 1</th>
+                <th>옵션값 2</th>
+                <th>추가 공급가</th>
+                <th>추가 판매가</th>
+                <th>추가 준수가</th>
+                <th>재고</th>
+                <th>상태 / 노출</th>
+                <th>삭제</th>
+              </tr>
+            </thead>
+            <tbody id="optionTbody">
+              <tr id="emptyOptionRow"><td colspan="8" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="admin-goods-register-option-append-actions">
+          <button type="button" id="appendOptionBtn" class="admin-btn-secondary admin-goods-register-option-add-button">
+            <svg class="admin-goods-register-option-add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>옵션 추가</span>
+          </button>
+        </div>
+      </div>
+    </section>
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-goods-register-toggle-header">
+        <h3 class="admin-card-title">텍스트 입력 옵션</h3>
+        <div class="admin-goods-register-mini-toggle" role="radiogroup" aria-label="텍스트 옵션 사용 여부">
+          <label class="admin-goods-register-mini-radio"><input type="radio" name="has_text_option" value="Y" data-text-option-toggle aria-controls="goodsTextOptionPanel" aria-expanded="false"><span class="admin-goods-register-mini-radio-mark" aria-hidden="true"></span><span class="admin-goods-register-mini-radio-text">사용함</span></label>
+          <label class="admin-goods-register-mini-radio"><input type="radio" name="has_text_option" value="N" data-text-option-toggle checked aria-controls="goodsTextOptionPanel" aria-expanded="false"><span class="admin-goods-register-mini-radio-mark" aria-hidden="true"></span><span class="admin-goods-register-mini-radio-text">사용안함</span></label>
+        </div>
+      </div>
+      <div id="goodsTextOptionPanel" class="admin-goods-register-option-body is-hidden" data-text-option-row hidden aria-hidden="true">
+        <div class="admin-goods-register-table-wrap">
+          <table class="admin-goods-register-table admin-goods-register-text-option-table">
+            <thead>
+              <tr>
+                <th>질문</th>
+                <th>필수 여부</th>
+                <th>글자수 제한</th>
+                <th>상태</th>
+                <th>삭제</th>
+              </tr>
+            </thead>
+            <tbody id="textOptionTbody">
+              <tr id="emptyTextOptionRow"><td colspan="5" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">입력옵션을 추가해 주세요.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="admin-goods-register-option-append-actions">
+          <button type="button" id="addTextOptionBtn" class="admin-btn-secondary admin-goods-register-option-add-button">
+            <svg class="admin-goods-register-option-add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>입력옵션추가</span>
+          </button>
+        </div>
+      </div>    </section>
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">배송비 정보</h3>
+      </div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">배송 정책<span class="admin-required-mark" aria-hidden="true">*</span></span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-four" role="radiogroup" aria-label="배송비 정책">
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="PAID" checked><span>유료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="QUANTITY"><span>수량별</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="FREE"><span>무료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="COD"><span>착불 배송</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row" data-shipping-fee-row>
+          <label class="admin-form-label" for="shipping_fee">기본 배송비<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-price-control">
+            <span class="admin-goods-register-unit-input"><input id="shipping_fee" name="shipping_fee" type="text" inputmode="numeric" class="admin-input" value="2500"><span class="admin-goods-register-unit">원</span></span>
+          </div>
+        </div>
+        <div class="admin-form-row" data-quantity-shipping-row hidden>
+          <label class="admin-form-label" for="shipping_qty_limit">합포장 기준 수량<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-price-control is-wide">
+            <span class="admin-goods-register-unit-input is-quantity"><input id="shipping_qty_limit" name="shipping_qty_limit" type="text" inputmode="numeric" class="admin-input" value="1"><span class="admin-goods-register-unit">개</span></span>
+            <span class="admin-goods-register-help">마다 배송비 1회 부과</span>
+          </div>
+        </div>
+        <div class="admin-form-row" data-extra-shipping-row>
+          <span class="admin-form-label">추가 배송비 설정</span>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <input type="hidden" name="has_extra_shipping" value="Y">
+            <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_jeju">
+              <span>제주도(편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_jeju" name="extra_shipping_jeju" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_island">
+              <span>도서산간(편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_island" name="extra_shipping_island" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+
+            <p class="admin-goods-register-help">※ 최종 산출된 박스 수량만큼 곱셈 부과</p>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="return_shipping_fee">반품/교환 배송비<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <label class="admin-goods-register-shipping-fee-field" for="return_shipping_fee">
+              <span>반품 배송비 (편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="return_shipping_fee" name="return_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="2500" aria-label="반품 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="exchange_shipping_fee">
+              <span>교환 배송비 (왕복)</span>
+              <span class="admin-goods-register-unit-input"><input id="exchange_shipping_fee" name="exchange_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="5000" aria-label="교환 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">상품 상세 설명</h3>
+      </div>
+      <div class="admin-goods-register-editor-wrap">
+        <textarea id="content" name="content" class="admin-input admin-goods-register-editor" rows="12" placeholder="상품 상세 설명을 입력하세요."></textarea>
+      </div>
+    </section>
+
+    <div class="admin-goods-register-bottom-actions">
+      <a href="{{ previous_url|default('/' ~ setting.site.admin_directory ~ '/goods/lists') }}" class="admin-btn-secondary">목록으로</a>
+      <button type="submit" class="admin-btn-primary">상품 등록</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block appScript %}
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/register.js?v=19"></script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

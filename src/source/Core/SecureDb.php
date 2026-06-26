@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use Generator;
 use PDO;
 
 class SecureDb
@@ -50,6 +51,44 @@ class SecureDb
     $statement->execute($params);
 
     return $statement->fetchAll();
+  }
+
+
+  /**
+   * 대용량 조회 결과를 한 행씩 반환합니다.
+   *
+   * @param string $sql 실행할 SQL
+   * @param array $params 바인딩 파라미터
+   *
+   * @return Generator<array>
+   */
+  public function fetchGenerator(string $sql, array $params = []): Generator
+  {
+    $previousBuffered = null;
+
+    if (defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
+      try {
+        $previousBuffered = $this->pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY);
+        $this->pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+      } catch (\Throwable) {
+        $previousBuffered = null;
+      }
+    }
+
+    $statement = $this->pdo->prepare($sql);
+    $statement->execute($params);
+
+    try {
+      while (($row = $statement->fetch()) !== false) {
+        yield $row;
+      }
+    } finally {
+      $statement->closeCursor();
+
+      if ($previousBuffered !== null && defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
+        $this->pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $previousBuffered);
+      }
+    }
   }
 
   /**

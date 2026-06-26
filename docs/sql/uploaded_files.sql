@@ -11,6 +11,7 @@ CREATE TABLE `uploaded_files` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_category` (`category`),
+  KEY `idx_file_category_used` (`file_path`,`category`,`is_used`),
   KEY `idx_uploader` (`uploader_name`),
   KEY `idx_is_used` (`is_used`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='업로드 파일 메타 관리';

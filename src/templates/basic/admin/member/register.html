@@ -1,0 +1,146 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}회원 등록{% endblock %}
+
+{% block contents %}
+<section class="admin-member-detail admin-member-register">
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">B2B 회원 유형에 맞춰 기본 정보, 사업자 정보, 정산 정보를 등록합니다.</p>
+  </div>
+
+  <form id="memberDetailForm" class="admin-member-detail-edit-form" method="post" enctype="multipart/form-data" action="/{{ setting.site.admin_directory }}/member/register" data-member-form-mode="register" novalidate>
+    <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+    <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+
+    <section class="admin-card admin-member-detail-section">
+      <div class="admin-card-header admin-member-detail-basic-header">
+        <h3 class="admin-card-title">기본 정보</h3>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="user_id">아이디<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="user_id" name="user_id" type="text" class="admin-input" autocomplete="username" placeholder="영문, 숫자, 밑줄 4자 이상">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="password_new">비밀번호<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-password-group">
+              <input id="password_new" name="password_new" type="password" class="admin-input" autocomplete="new-password" placeholder="비밀번호 8자 이상">
+              <input id="password_confirm" name="password_confirm" type="password" class="admin-input" autocomplete="new-password" placeholder="비밀번호 확인">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="name">대표자명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="name" name="name" type="text" class="admin-input">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="mobile_1">휴대폰<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-phone-group">
+              <input id="mobile_1" name="mobile_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" aria-label="휴대폰 first part">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="mobile_2" name="mobile_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="휴대폰 second part">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="mobile_3" name="mobile_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="휴대폰 third part">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="email">이메일<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="email" name="email" type="email" class="admin-input" autocomplete="email">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">수신동의</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-agreement-group">
+              <label class="admin-member-detail-agreement"><input type="hidden" name="is_email_agreed" value="0"><input type="checkbox" name="is_email_agreed" value="1" class="admin-member-detail-agreement-input" checked><span class="admin-member-detail-agreement-box"><svg class="admin-member-detail-agreement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></span><span class="admin-member-detail-agreement-text">이메일</span></label>
+              <label class="admin-member-detail-agreement"><input type="hidden" name="is_sms_agreed" value="0"><input type="checkbox" name="is_sms_agreed" value="1" class="admin-member-detail-agreement-input" checked><span class="admin-member-detail-agreement-box"><svg class="admin-member-detail-agreement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></span><span class="admin-member-detail-agreement-text">SMS</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section admin-member-detail-account-card">
+      <div class="admin-card-header"><h3 class="admin-card-title">계정 상태</h3></div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">회원 유형</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="Role">
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="SELLER" checked><span>판매사</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="VENDOR"><span>공급사</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="ADMIN"><span>관리자</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row" data-member-role-card="approval" data-visible-roles="SELLER,VENDOR">
+          <span class="admin-form-label">승인 상태</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="Approval">
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="APPROVED"><span>승인</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="PENDING" checked><span>대기</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="REJECTED"><span>반려</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">계정 상태</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="Status">
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="ACTIVE" checked><span>정상</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="SUSPENDED"><span>정지</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="WITHDRAWN"><span>탈퇴</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section" data-member-role-card="business" data-visible-roles="SELLER,VENDOR">
+      <div class="admin-card-header"><h3 class="admin-card-title">사업자 정보</h3></div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row"><label class="admin-form-label" for="company_name">상호명<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><input id="company_name" name="company_name" type="text" class="admin-input"></div></div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_number_1">사업자등록번호<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-number-group"><input id="business_number_1" name="business_number_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" aria-label="사업자등록번호 앞자리"><span class="admin-member-detail-phone-separator">-</span><input id="business_number_2" name="business_number_2" type="text" inputmode="numeric" maxlength="2" class="admin-input" aria-label="사업자등록번호 가운데자리"><span class="admin-member-detail-phone-separator">-</span><input id="business_number_3" name="business_number_3" type="text" inputmode="numeric" maxlength="5" class="admin-input" aria-label="사업자등록번호 끝자리"></div></div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_license_file_upload">사업자등록증<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-upload-field upload-field"><input type="hidden" name="business_license_file" value=""><div class="admin-member-detail-upload-card"><div class="admin-member-detail-upload-preview" aria-hidden="true"><svg class="admin-member-detail-upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><div class="admin-member-detail-upload-info"><strong class="admin-member-detail-upload-title">사업자등록증 이미지</strong><span class="admin-member-detail-upload-desc">JPG, PNG 형식의 이미지 파일을 등록해 주세요.</span><div class="upload-controls admin-member-detail-upload-controls"><label for="business_license_file_upload" class="upload-select-btn admin-member-detail-upload-button">이미지 선택</label><input id="business_license_file_upload" name="business_license_file_upload" type="file" accept="image/*" class="upload-file-input"><span class="upload-file-name">등록된 파일 없음</span></div></div></div></div></div>
+        </div>
+        <div class="admin-form-row"><label class="admin-form-label" for="business_type">업태<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><input id="business_type" name="business_type" type="text" class="admin-input"></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="business_item">종목<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><input id="business_item" name="business_item" type="text" class="admin-input"></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="company_phone_1">회사 전화<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-phone-group"><input id="company_phone_1" name="company_phone_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" aria-label="회사 전화 앞자리"><span class="admin-member-detail-phone-separator">-</span><input id="company_phone_2" name="company_phone_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="회사 전화 가운데자리"><span class="admin-member-detail-phone-separator">-</span><input id="company_phone_3" name="company_phone_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="회사 전화 끝자리"></div></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="fax_1">팩스</label><div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-phone-group"><input id="fax_1" name="fax_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" aria-label="팩스 앞자리"><span class="admin-member-detail-phone-separator">-</span><input id="fax_2" name="fax_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="팩스 가운데자리"><span class="admin-member-detail-phone-separator">-</span><input id="fax_3" name="fax_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" aria-label="팩스 끝자리"></div></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="zip_code">사업장 주소<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-address-group"><div class="admin-member-detail-address-main"><input id="zip_code" name="zip_code" type="text" class="admin-input admin-member-detail-address-trigger" data-admin-postcode data-postcode-target="#zip_code" data-address-target="#address" data-detail-address-target="#address_detail" readonly aria-label="우편번호"><input id="address" name="address" type="text" class="admin-input admin-member-detail-address-trigger" data-admin-postcode data-postcode-target="#zip_code" data-address-target="#address" data-detail-address-target="#address_detail" readonly aria-label="Address"></div><input id="address_detail" name="address_detail" type="text" class="admin-input" aria-label="상세 주소"></div></div></div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section" data-member-role-card="settlement" data-visible-roles="VENDOR" hidden>
+      <div class="admin-card-header"><h3 class="admin-card-title">정산 정보</h3></div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row"><label class="admin-form-label" for="bank_name">은행명<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><select id="bank_name" name="bank_name" class="admin-input"><option value="">은행 선택</option>{% for bank in banks %}<option value="{{ bank.name }}">{{ bank.name }}</option>{% endfor %}</select></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="account_number">계좌번호<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><input id="account_number" name="account_number" type="text" class="admin-input"></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="account_holder">예금주<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><input id="account_holder" name="account_holder" type="text" class="admin-input"></div></div>
+        <div class="admin-form-row"><label class="admin-form-label" for="bank_book_file_upload">통장사본<span class="admin-required-mark" aria-hidden="true">*</span></label><div class="admin-form-content admin-member-detail-control"><div class="admin-member-detail-upload-field upload-field"><input type="hidden" name="bank_book_file" value=""><div class="admin-member-detail-upload-card"><div class="admin-member-detail-upload-preview" aria-hidden="true"><svg class="admin-member-detail-upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div><div class="admin-member-detail-upload-info"><strong class="admin-member-detail-upload-title">통장사본 이미지</strong><span class="admin-member-detail-upload-desc">정산 계좌 확인을 위한 이미지를 등록해 주세요.</span><div class="upload-controls admin-member-detail-upload-controls"><label for="bank_book_file_upload" class="upload-select-btn admin-member-detail-upload-button">이미지 선택</label><input id="bank_book_file_upload" name="bank_book_file_upload" type="file" accept="image/*" class="upload-file-input"><span class="upload-file-name">등록된 파일 없음</span></div></div></div></div></div></div>
+      </div>
+    </section>
+
+    <div class="admin-member-detail-bottom-actions">
+      <a href="{{ previous_url }}" class="admin-btn-secondary">이전으로</a>
+      <button type="submit" class="admin-btn-primary">등록</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block appScript %}
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/member/detail.js?v=10"></script>
+{% endblock %}

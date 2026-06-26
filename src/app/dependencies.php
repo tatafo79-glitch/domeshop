@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Core\SecureDb;
+use App\Lib\FileUploader;
 use App\Lib\GusLib;
+use App\Lib\SftpTransfer;
 use App\Lib\HtmlSanitizer;
 use App\Services\ServiceResolver;
 use App\Settings\Setting;
@@ -85,21 +87,18 @@ return [
   GusLib::class => fn (): GusLib => new GusLib(),
   'lib' => fn (ContainerInterface $container): GusLib => $container->get(GusLib::class),
 
+  SftpTransfer::class => fn (): SftpTransfer => new SftpTransfer(),
+  FileUploader::class => fn (ContainerInterface $container): FileUploader => new FileUploader(
+    $container->get(SettingInterface::class),
+    $container->get(SftpTransfer::class)
+  ),
+
   /**
-   * Create the HTML sanitizer service.
-   *
-   * @param ContainerInterface $container [explicit description]
+   * HTML 입력 정제 서비스를 생성합니다.
    *
    * @return HtmlSanitizer
    */
-  HtmlSanitizer::class => function (ContainerInterface $container): HtmlSanitizer {
-    $cachePath = rtrim((string) $container->get(SettingInterface::class)->get('root_path'), '/\\') . '/var/htmlpurifier';
-    if (!is_dir($cachePath)) {
-      mkdir($cachePath, 0775, true);
-    }
-
-    return new HtmlSanitizer($cachePath);
-  },
+  HtmlSanitizer::class => fn (): HtmlSanitizer => new HtmlSanitizer(),
   'sanitizer' => fn (ContainerInterface $container): HtmlSanitizer => $container->get(HtmlSanitizer::class),
 
   ResponseFactory::class => fn (): ResponseFactory => new ResponseFactory(),

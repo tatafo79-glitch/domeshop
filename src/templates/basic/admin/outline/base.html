@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   {% block header %}
@@ -6,20 +6,24 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Domemall Admin{% endblock %}</title>
-  <meta name="admin-dir" content="dmmt">
+  <meta name="admin-dir" content="{{ setting.site.admin_directory }}">
+  <meta name="image-base-url" content="{{ setting.cdn_info.image_path|default('') }}">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html { font-size: 13px; }
-    body { margin: 0; font-family: Pretendard, ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+    html { height: 100%; overflow: hidden; font-size: 13px; }
+    body { height: 100%; overflow: hidden; margin: 0; font-family: Pretendard, ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+    .admin-outline-shell { height: 100dvh; overflow: hidden; }
     button, input, select, textarea { font: inherit; }
     [x-cloak] { display: none !important; }
     .admin-outline-nav-text { font-size: 14px; font-weight: 500; }
     .admin-outline-nav-submenu-link { font-size: 13px; }
     .admin-outline-page-title { font-size: 16px; font-weight: 700; }
     .admin-outline-profile-name { font-size: 14px; font-weight: 500; }
+    .admin-member-detail-tab-button { font-size: 14px !important; font-weight: 700 !important; }
   </style>
-  <link href="/dist/basic/css/admin.css?v=19" rel="stylesheet">
+  <link href="/dist/basic/css/admin.css?v=68" rel="stylesheet">
   <script type="module" src="/dist/basic/js/vendor.js"></script>
+  <script type="module" src="/dist/basic/js/app.js?v=8"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   {% block appScript %}{% endblock %}
   {% endblock %}
@@ -39,7 +43,7 @@
     <div class="admin-outline-content">
       <header id="mainHeader" class="admin-outline-header">
         <div class="admin-outline-header-title-wrap">
-          <button @click="sidebarOpen = true" class="admin-outline-menu-button" type="button" aria-label="硫붾돱 ?닿린">
+          <button @click="sidebarOpen = true" class="admin-outline-menu-button" type="button" aria-label="메뉴 열기">
             <svg class="admin-outline-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
@@ -59,8 +63,20 @@
       </main>
     </div>
   </div>
+  {{ include('outline/company_quick_menu.html') }}
   {% endblock %}
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 

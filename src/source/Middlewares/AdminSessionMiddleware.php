@@ -28,7 +28,6 @@ class AdminSessionMiddleware extends CommonMiddleware
     $settings = $this->container->get(SettingInterface::class);
     $adminDir = trim((string) ($settings->get('site.admin_directory') ?? 'dmmt'), '/');
     $loginUrl = '/' . $adminDir . '/login';
-    $logoutUrl = '/' . $adminDir . '/logout';
     $path = $request->getUri()->getPath();
     $session = $this->container->get('session');
     $admin = $session->get('admin');
@@ -43,7 +42,7 @@ class AdminSessionMiddleware extends CommonMiddleware
       return (new SlimResponse())->withHeader('Location', '/' . $adminDir)->withStatus(302);
     }
 
-    if (in_array($path, [$loginUrl, $logoutUrl], true)) {
+    if ($path === $loginUrl) {
       return $handler->handle($request);
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin\Auth;
 
 use App\Services\BaseService;
+use SlimSession\Helper as SessionHelper;
 
 class PostService extends BaseService
 {
@@ -110,16 +111,9 @@ class PostService extends BaseService
   private function handleLoginFailure(array $admin): void
   {
     $adminId = (int) $admin['id'];
-    $nextFailCount = (int) ($admin['login_fail_count'] ?? 0) + 1;
+    $lockedUntil = date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60);
 
-    if ($nextFailCount >= self::MAX_LOGIN_FAIL_COUNT) {
-      $lockedUntil = date('Y-m-d H:i:s', time() + self::LOCK_MINUTES * 60);
-      $this->repo?->lockAdmin($adminId, $nextFailCount, $lockedUntil);
-
-      return;
-    }
-
-    $this->repo?->increaseLoginFailCount($adminId);
+    $this->repo?->recordLoginFailure($adminId, self::MAX_LOGIN_FAIL_COUNT, $lockedUntil);
   }
 
   /**
@@ -131,6 +125,9 @@ class PostService extends BaseService
    */
   private function setAdminSession(array $admin): void
   {
+    // 로그인 성공 시 익명 세션 ID를 폐기해 세션 고정 공격을 차단한다.
+    SessionHelper::id(true);
+
     $this->container->get('session')->set('admin', [
       'id' => (int) $admin['id'],
       'user_id' => (string) $admin['user_id'],

@@ -44,7 +44,7 @@
   --color-secondary: #334155;
   --color-accent: #3b82f6;
   --color-main-bg: #f8fafc;
-  --color-text-main: #dc2626;
+  --color-text-main: #1e293b;
   --color-border-base: #e2e8f0;
   --color-input-border-base: #cbd5e1;
 
@@ -238,3 +238,49 @@
 .se-status-bar { display: none !important; }
 .sun-editor textarea:focus, .se-code-wrapper textarea:focus { outline: none !important; box-shadow: none !important; border: none !important; --tw-ring-color: transparent !important; }
 svg.se-ci.se-ci { max-width: 24px; max-height: 24px; }
+
+@layer components {
+  .domemall-image-preview {
+    @apply pointer-events-none fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-4 py-6 opacity-0 transition-opacity;
+  }
+
+  .domemall-image-preview.is-open {
+    @apply opacity-100;
+  }
+
+  .domemall-image-preview-panel {
+    @apply pointer-events-auto flex max-h-[calc(100dvh-32px)] w-full max-w-5xl -translate-y-4 flex-col overflow-hidden border bg-white outline-none transition-transform;
+  }
+
+  .domemall-image-preview.is-open .domemall-image-preview-panel {
+    @apply translate-y-0;
+  }
+
+  .domemall-image-preview-header {
+    @apply relative flex items-center justify-between border-b border-slate-200 bg-slate-50 py-3 pl-5 pr-14;
+  }
+
+  .domemall-image-preview-title {
+    @apply text-[14px] font-semibold text-slate-700;
+  }
+
+  .domemall-image-preview-close {
+    @apply absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center text-slate-500 hover:text-slate-800 focus:outline-none sm:right-2;
+  }
+
+  .domemall-image-preview-close-icon {
+    @apply h-6 w-6 stroke-2;
+  }
+
+  .domemall-image-preview-body {
+    @apply flex min-h-0 flex-1 items-start justify-center overflow-auto bg-white p-3 sm:items-center sm:p-4;
+  }
+
+  .domemall-image-preview-image {
+    @apply max-h-[calc(100dvh-120px)] max-w-full object-contain;
+  }
+
+  [data-image-preview] {
+    @apply cursor-pointer;
+  }
+}

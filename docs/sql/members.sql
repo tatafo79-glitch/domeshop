@@ -36,5 +36,10 @@ CREATE TABLE `members` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_id` (`user_id`),
   UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `uk_vendor_code` (`vendor_code`)
+  UNIQUE KEY `uk_vendor_code` (`vendor_code`),
+  KEY `idx_role_status_approval_id` (`role`,`status`,`approval_status`,`id`),
+  KEY `idx_created_id` (`created_at`,`id`),
+  KEY `idx_last_login_id` (`last_login_at`,`id`),
+  KEY `idx_deposit_id` (`deposit`,`id`),
+  KEY `idx_mileage_id` (`mileage`,`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='통합 회원 테이블';

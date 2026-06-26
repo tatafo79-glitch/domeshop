@@ -1,0 +1,162 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}{{ asset.label }} 내역{% endblock %}
+
+{% block contents %}
+<section class="admin-member-asset-history-page">
+  <div class="admin-member-lists-header">
+    <p class="admin-page-desc">전체 회원의 {{ asset.label }} 변동 내역을 검색하고 잔액 흐름을 확인합니다.</p>
+  </div>
+
+  <section x-data="{ searchOpen: window.matchMedia('(min-width: 768px)').matches }" class="admin-card admin-member-lists-search admin-member-asset-history-search">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">
+        <svg class="admin-member-lists-title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <span>{{ asset.label }} 내역 검색</span>
+      </h3>
+      <div class="admin-member-lists-search-tools">
+        <a href="/{{ setting.site.admin_directory }}/member/{{ asset.key }}/history" class="admin-member-lists-reset">초기화</a>
+        <button type="button" class="admin-member-lists-search-toggle" :class="searchOpen ? 'is-open' : ''" @click="searchOpen = !searchOpen" :aria-expanded="searchOpen.toString()" aria-controls="memberAssetHistorySearchForm" aria-label="{{ asset.label }} 내역 검색 열기">
+          <svg class="admin-member-lists-search-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <form id="memberAssetHistorySearchForm" x-show="searchOpen" x-cloak class="admin-search-form admin-member-lists-search-form" method="get" action="/{{ setting.site.admin_directory }}/member/{{ asset.key }}/history">
+      {% if error_message %}
+      <p class="admin-member-lists-error">{{ error_message }}</p>
+      {% endif %}
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="role">회원타입</label>
+        <div class="admin-form-content admin-member-lists-filter-group">
+          <select id="role" name="role" class="admin-input admin-input-default">
+            <option value="" {{ is_selected(filters.role, '', true) }}>회원타입 전체</option>
+            <option value="SELLER" {{ is_selected(filters.role, 'SELLER') }}>판매사</option>
+            <option value="VENDOR" {{ is_selected(filters.role, 'VENDOR') }}>공급사</option>
+          </select>
+          <select id="change_type" name="change_type" class="admin-input admin-input-default">
+            <option value="" {{ is_selected(filters.change_type, '', true) }}>변동 전체</option>
+            <option value="PLUS" {{ is_selected(filters.change_type, 'PLUS') }}>적립</option>
+            <option value="MINUS" {{ is_selected(filters.change_type, 'MINUS') }}>차감</option>
+          </select>
+        </div>
+      </div>
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="date_start">기간검색</label>
+        <div class="admin-form-content admin-member-lists-range">
+          <input id="date_start" name="date_start" type="date" class="admin-input admin-member-lists-date-input" value="{{ filters.date_start }}" aria-label="기간검색 시작일">
+          <span class="admin-member-lists-range-separator">-</span>
+          <input id="date_end" name="date_end" type="date" class="admin-input admin-member-lists-date-input" value="{{ filters.date_end }}" aria-label="기간검색 종료일">
+        </div>
+      </div>
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="keyword">검색어</label>
+        <div class="admin-form-content admin-member-lists-keyword">
+          <select id="keyword_type" name="keyword_type" class="admin-input admin-input-default">
+            <option value="" {{ is_selected(filters.keyword_type, '', true) }}>전체</option>
+            <option value="company_name" {{ is_selected(filters.keyword_type, 'company_name') }}>상호명</option>
+            <option value="user_id" {{ is_selected(filters.keyword_type, 'user_id') }}>아이디</option>
+            <option value="name" {{ is_selected(filters.keyword_type, 'name') }}>대표자명</option>
+            <option value="reason" {{ is_selected(filters.keyword_type, 'reason') }}>사유</option>
+            <option value="order_no" {{ is_selected(filters.keyword_type, 'order_no') }}>주문번호</option>
+            <option value="actor_name" {{ is_selected(filters.keyword_type, 'actor_name') }}>처리자</option>
+          </select>
+          <input id="keyword" name="keyword" type="text" class="admin-input admin-member-asset-history-keyword" value="{{ filters.keyword }}" placeholder="검색어를 입력하세요">
+          <button type="submit" class="admin-btn-primary">검색</button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <form id="memberAssetHistoryExcelDownloadForm" class="admin-member-lists-download-form" method="post" action="/{{ setting.site.admin_directory }}/member/{{ asset.key }}/history/download">
+    <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+    <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+    <input type="hidden" name="role" value="{{ filters.role }}">
+    <input type="hidden" name="change_type" value="{{ filters.change_type }}">
+    <input type="hidden" name="date_start" value="{{ filters.date_start }}">
+    <input type="hidden" name="date_end" value="{{ filters.date_end }}">
+    <input type="hidden" name="keyword_type" value="{{ filters.keyword_type }}">
+    <input type="hidden" name="keyword" value="{{ filters.keyword }}">
+  </form>
+
+  <div class="admin-member-lists-actions">
+    <button type="submit" form="memberAssetHistoryExcelDownloadForm" class="admin-btn-excel">
+      <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"></path>
+      </svg>
+      <span class="btn-text">엑셀 다운로드</span>
+    </button>
+  </div>
+  <section x-data class="admin-card admin-member-asset-history-list-card">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">검색 결과 <span class="admin-badge-count">{{ pagination.total|number_format }}</span></h3>
+      <select form="memberAssetHistorySearchForm" name="limit" class="admin-input admin-select-sm" aria-label="목록 개수 선택" @change="$el.form.requestSubmit()">
+        {% for limit_option in limit_options %}
+        <option value="{{ limit_option }}" {{ is_selected(pagination.limit ~ '', limit_option ~ '') }}>{{ limit_option }}개씩 보기</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="admin-member-asset-history-list-wrap">
+      <table class="admin-member-asset-history-list-table">
+        <thead>
+          <tr>
+            <th class="admin-table-th">NO</th>
+            <th class="admin-table-th">회원타입</th>
+            <th class="admin-table-th">상호명 / 아이디</th>
+            <th class="admin-table-th">사유</th>
+            <th class="admin-table-th">주문번호</th>
+            <th class="admin-table-th admin-member-asset-history-amount-th">변동 수량</th>
+            <th class="admin-table-th admin-member-asset-history-amount-th">변동 후 잔액</th>
+            <th class="admin-table-th">처리자</th>
+            <th class="admin-table-th">일시</th>
+            <th class="admin-table-th">관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for history in histories %}
+          <tr>
+            <td class="admin-table-td admin-member-asset-history-center">{{ history.no }}</td>
+            <td class="admin-table-td admin-member-asset-history-center"><span class="admin-member-lists-role is-{{ history.role|lower }}">{{ history.role_label }}</span></td>
+            <td class="admin-table-td admin-member-asset-history-member">{% if history.role == 'ADMIN' %}<strong class="admin-company-quick-menu-static">{{ history.company_name }}</strong>{% else %}<button type="button" class="admin-company-quick-menu-trigger" data-admin-company-quick-menu data-member-id="{{ history.member_id }}" data-company-name="{{ history.company_name }}" data-user-id="{{ history.user_id }}" data-role="{{ history.role }}"><strong>{{ history.company_name }}</strong></button>{% endif %}<span>{{ history.user_id }}</span></td>
+            <td class="admin-table-td admin-member-asset-history-reason">{{ history.reason }}</td>
+            <td class="admin-table-td admin-member-asset-history-center">{{ history.order_no }}</td>
+            <td class="admin-table-td admin-member-asset-history-amount{% if history.change_amount < 0 %} is-minus{% else %} is-plus{% endif %}">{{ history.formatted_change_amount }}</td>
+            <td class="admin-table-td admin-member-asset-history-amount">{{ history.formatted_balance_after }}</td>
+            <td class="admin-table-td admin-member-asset-history-center">{{ history.actor_name }}</td>
+            <td class="admin-table-td admin-member-asset-history-center"><time>{{ history.created_date }}{% if history.created_time %}<br>({{ history.created_time }}){% endif %}</time></td>
+            <td class="admin-table-td admin-member-asset-history-center"><a href="/{{ setting.site.admin_directory }}/member/detail/{{ history.member_id }}?return_url={{ current_url|url_encode }}" class="admin-member-detail-assets-link">상세</a></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td class="admin-table-td admin-member-asset-history-empty" colspan="10">
+              <svg class="admin-member-asset-history-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+              <span>{{ asset.label }} 내역이 없습니다.</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="admin-pagination">
+      <nav class="admin-pagination-nav" aria-label="{{ asset.label }} 내역 페이지">
+        <a href="{{ pagination.prev_url }}" class="admin-pagination-prev{% if not pagination.has_prev %} disabled{% endif %}">이전</a>
+        <div class="admin-pagination-pages">
+          {% for page_item in pagination.pages %}
+          <a href="{{ page_item.url }}" class="admin-pagination-page{% if page_item.active %} active{% endif %}{% if page_item.desktop_only %} desktop-only{% endif %}">{{ page_item.number }}</a>
+          {% endfor %}
+        </div>
+        <a href="{{ pagination.next_url }}" class="admin-pagination-next{% if not pagination.has_next %} disabled{% endif %}">다음</a>
+      </nav>
+    </div>
+  </section>
+</section>
+{% endblock %}
+
+{% block appScript %}
+<script type="module" src="/dist/basic/js/admin/member/asset_history.js"></script>
+{% endblock %}

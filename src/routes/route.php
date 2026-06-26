@@ -31,11 +31,12 @@ return function (App $app): void {
   $app->group('/' . $adminDir, function (RouteGroup $group): void {
     $group->get('/login', Admin\Auth\Page::class);
     $group->post('/login', Admin\Auth\Post::class);
-    $group->get('/logout', Admin\Auth\Logout::class);
+    $group->post('/logout', Admin\Auth\Logout::class);
     $group->get('', Admin\Index\Page::class);
     (require __DIR__ . '/admin/member.php')($group);
     (require __DIR__ . '/admin/goods.php')($group);
     (require __DIR__ . '/admin/order.php')($group);
+    (require __DIR__ . '/common/upload.php')($group);
   })
     ->add('csrf')
     ->add(new AdminSessionMiddleware($app->getContainer()));

@@ -35,25 +35,29 @@ return function (App $app, ContainerInterface $container): void {
     $allowedOrigins = ['*.okdome.com', '*localhost*', '*127.0.0.1*', '*192.168.*'];
   }
 
-  $sessionPath = $_ENV['SESSION_SAVE_PATH'] ?? rtrim((string) ($settings['root_path'] ?? dirname(__DIR__, 2)), '/\\') . '/var/sessions';
-  if (!is_dir($sessionPath)) {
-    mkdir($sessionPath, 0775, true);
-  }
-
-  $app->addBodyParsingMiddleware();
-  $app->add(new BasePathMiddleware($app));
-  $app->add(TwigMiddleware::create($app, $container->get(Twig::class)));
-  $app->add(new Session([
+  $sessionOptions = [
     'name' => $_ENV['SESSION_NAME'] ?? 'DMS',
     'autorefresh' => true,
     'lifetime' => $_ENV['SESSION_LIFETIME'] ?? '6 hour',
     'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
     'httponly' => true,
     'samesite' => 'Lax',
-    'ini_settings' => [
+  ];
+  $sessionPath = trim((string) ($_ENV['SESSION_SAVE_PATH'] ?? ''));
+  if ($sessionPath !== '') {
+    if (!is_dir($sessionPath)) {
+      mkdir($sessionPath, 0775, true);
+    }
+    // 명시된 환경변수가 있을 때만 PHP 기본 세션 저장 경로를 덮어씁니다.
+    $sessionOptions['ini_settings'] = [
       'session.save_path' => $sessionPath,
-    ],
-  ]));
+    ];
+  }
+
+  $app->addBodyParsingMiddleware();
+  $app->add(new BasePathMiddleware($app));
+  $app->add(TwigMiddleware::create($app, $container->get(Twig::class)));
+  $app->add(new Session($sessionOptions));
   $app->add(new TrailingSlash(false));
   $app->add(new HttpOriginMiddleware($container));
   $app->add(new DebuggingMiddleware($container));
@@ -117,6 +121,19 @@ return function (App $app, ContainerInterface $container): void {
       try {
         // Persist a compact database error log so admin screens can inspect failures later.
         $db = $container->get(SecureDb::class);
+        $cookieNames = array_filter(array_map(
+          static function (string $cookie): string {
+            $parts = explode('=', trim($cookie), 2);
+
+            return trim($parts[0] ?? '');
+          },
+          explode(';', (string) ($_SERVER['HTTP_COOKIE'] ?? ''))
+        ));
+        // 쿠키 값은 세션/CSRF 토큰을 포함할 수 있으므로 이름만 남기고 값은 저장하지 않는다.
+        $maskedCookie = implode('; ', array_map(
+          static fn (string $cookieName): string => $cookieName . '=[masked]',
+          $cookieNames
+        ));
         $db->execute(
           'INSERT INTO error_logs (name, method, file, line, request_uri, query_string, remote_ip, cookie, message, reg_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
           [
@@ -127,7 +144,7 @@ return function (App $app, ContainerInterface $container): void {
             substr($_SERVER['REQUEST_URI'] ?? '', 0, 255),
             substr($_SERVER['QUERY_STRING'] ?? '', 0, 255),
             substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45),
-            substr($_SERVER['HTTP_COOKIE'] ?? '', 0, 500),
+            substr($maskedCookie, 0, 500),
             substr($exceptionMessage, 0, 1000),
           ]
         );

@@ -3,6 +3,7 @@ CREATE TABLE goods_options (
   goods_id INT UNSIGNED NOT NULL COMMENT '상품 ID',
   option_val1 VARCHAR(100) NOT NULL COMMENT '옵션값 1 (예: 빨강)',
   option_val2 VARCHAR(100) DEFAULT NULL COMMENT '옵션값 2 (예: XL)',
+  option_val3 VARCHAR(100) DEFAULT NULL COMMENT '옵션값 3',
   option_supply_price INT NOT NULL DEFAULT 0 COMMENT '옵션 추가 공급가 (+/-)',
   option_sell_price INT NOT NULL DEFAULT 0 COMMENT '옵션 추가 판매가 (+/-)',
   option_compliance_price INT NOT NULL DEFAULT 0 COMMENT '옵션 추가 준수가격 (+/-)',

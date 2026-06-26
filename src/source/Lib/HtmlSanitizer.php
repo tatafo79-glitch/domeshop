@@ -12,9 +12,9 @@ class HtmlSanitizer
   private HTMLPurifier $purifier;
 
   /**
-   * Method __construct
+   * HTMLPurifier 기반 입력 정제기를 초기화합니다.
    *
-   * @param ?string $cachePath [explicit description]
+   * @param ?string $cachePath HTMLPurifier 캐시 저장 경로
    *
    * @return void
    */
@@ -30,9 +30,9 @@ class HtmlSanitizer
   }
 
   /**
-   * Method clean
+   * 입력 데이터를 안전한 HTML 허용 목록 기준으로 정제합니다.
    *
-   * @param string|array|null $data [explicit description]
+   * @param string|array|null $data 정제할 입력 데이터
    *
    * @return string|array
    */

@@ -1,0 +1,187 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}회원 목록{% endblock %}
+
+{% block contents %}
+<section class="admin-member-lists">
+  <div class="admin-member-lists-header">
+    <p class="admin-page-desc">판매사, 공급사, 관리자를 통합 조회하고 승인 상태와 자산 현황을 확인합니다.</p>
+  </div>
+
+  <div class="admin-member-lists-summary">
+    <a href="/{{ setting.site.admin_directory }}/member/lists" class="admin-member-lists-summary-card{% if filters.role == '' and filters.approval_status == '' and filters.status == '' and filters.keyword == '' and filters.date_start == '' and filters.date_end == '' and filters.amount_min == '' and filters.amount_max == '' %} is-active{% endif %}" aria-label="전체 회원 목록 검색">
+      <span class="admin-member-lists-summary-label">전체 회원</span>
+      <strong class="admin-member-lists-summary-value">{{ summary.total|number_format }}</strong>
+    </a>
+    <a href="/{{ setting.site.admin_directory }}/member/lists?role=SELLER" class="admin-member-lists-summary-card{% if filters.role == 'SELLER' and filters.approval_status == '' and filters.status == '' and filters.keyword == '' and filters.date_start == '' and filters.date_end == '' and filters.amount_min == '' and filters.amount_max == '' %} is-active{% endif %}" aria-label="판매사 회원 목록 검색">
+      <span class="admin-member-lists-summary-label">판매사</span>
+      <strong class="admin-member-lists-summary-value">{{ summary.seller|number_format }}</strong>
+    </a>
+    <a href="/{{ setting.site.admin_directory }}/member/lists?role=VENDOR" class="admin-member-lists-summary-card{% if filters.role == 'VENDOR' and filters.approval_status == '' and filters.status == '' and filters.keyword == '' and filters.date_start == '' and filters.date_end == '' and filters.amount_min == '' and filters.amount_max == '' %} is-active{% endif %}" aria-label="공급사 회원 목록 검색">
+      <span class="admin-member-lists-summary-label">공급사</span>
+      <strong class="admin-member-lists-summary-value">{{ summary.vendor|number_format }}</strong>
+    </a>
+    <a href="/{{ setting.site.admin_directory }}/member/lists?approval_status=PENDING" class="admin-member-lists-summary-card is-attention{% if filters.role == '' and filters.approval_status == 'PENDING' and filters.status == '' and filters.keyword == '' and filters.date_start == '' and filters.date_end == '' and filters.amount_min == '' and filters.amount_max == '' %} is-active{% endif %}" aria-label="승인 대기 회원 목록 검색">
+      <span class="admin-member-lists-summary-label">승인 대기</span>
+      <strong class="admin-member-lists-summary-value">{{ summary.pending|number_format }}</strong>
+    </a>
+  </div>
+
+  <section x-data="{ searchOpen: window.matchMedia('(min-width: 768px)').matches }" class="admin-card admin-member-lists-search">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">
+        <svg class="admin-member-lists-title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <span>회원 검색</span>
+      </h3>
+      <div class="admin-member-lists-search-tools">
+        <a href="/{{ setting.site.admin_directory }}/member/lists" class="admin-member-lists-reset">초기화</a>
+        <button type="button" class="admin-member-lists-search-toggle" :class="searchOpen ? 'is-open' : ''" @click="searchOpen = !searchOpen" :aria-expanded="searchOpen.toString()" aria-controls="memberSearchForm" aria-label="회원 검색 열기">
+          <svg class="admin-member-lists-search-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <form id="memberSearchForm" x-data="{ detailSearchOpen: {{ (filters.date_start or filters.date_end or filters.amount_min or filters.amount_max) ? 'true' : 'false' }} }" x-show="searchOpen" x-cloak class="admin-search-form admin-member-lists-search-form" method="get" action="/{{ setting.site.admin_directory }}/member/lists">
+      {% if error_message %}
+      <p class="admin-member-lists-error">{{ error_message }}</p>
+      {% endif %}
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="role">회원타입</label>
+        <div class="admin-form-content admin-member-lists-filter-group">
+          <select id="role" name="role" class="admin-input admin-input-default"><option value="" {{ is_selected(filters.role, '', true) }}>전체</option><option value="SELLER" {{ is_selected(filters.role, 'SELLER') }}>판매사</option><option value="VENDOR" {{ is_selected(filters.role, 'VENDOR') }}>공급사</option><option value="ADMIN" {{ is_selected(filters.role, 'ADMIN') }}>관리자</option></select>
+          <select id="approval_status" name="approval_status" class="admin-input admin-input-default"><option value="" {{ is_selected(filters.approval_status, '', true) }}>승인 상태 전체</option><option value="APPROVED" {{ is_selected(filters.approval_status, 'APPROVED') }}>승인</option><option value="PENDING" {{ is_selected(filters.approval_status, 'PENDING') }}>대기</option><option value="REJECTED" {{ is_selected(filters.approval_status, 'REJECTED') }}>반려</option></select>
+          <select id="status" name="status" class="admin-input admin-input-default"><option value="" {{ is_selected(filters.status, '', true) }}>계정 상태 전체</option><option value="ACTIVE" {{ is_selected(filters.status, 'ACTIVE') }}>정상</option><option value="SUSPENDED" {{ is_selected(filters.status, 'SUSPENDED') }}>정지</option><option value="WITHDRAWN" {{ is_selected(filters.status, 'WITHDRAWN') }}>탈퇴</option></select>
+        </div>
+      </div>
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="keyword">검색어</label>
+        <div class="admin-form-content admin-member-lists-keyword">
+          <select id="keyword_type" name="keyword_type" class="admin-input admin-input-default"><option value="" {{ is_selected(filters.keyword_type, '', true) }}>전체</option><option value="company_name" {{ is_selected(filters.keyword_type, 'company_name') }}>상호명</option><option value="user_id" {{ is_selected(filters.keyword_type, 'user_id') }}>아이디</option><option value="name" {{ is_selected(filters.keyword_type, 'name') }}>대표자명</option><option value="mobile" {{ is_selected(filters.keyword_type, 'mobile') }}>휴대폰</option></select>
+          <input id="keyword" name="keyword" type="text" class="admin-input" value="{{ filters.keyword }}" placeholder="검색어를 입력하세요">
+          <button type="submit" class="admin-btn-primary">검색</button>
+          <button type="button" class="admin-member-lists-detail-search" :class="detailSearchOpen ? 'is-active' : ''" @click="detailSearchOpen = !detailSearchOpen" :aria-expanded="detailSearchOpen.toString()" aria-controls="memberDetailSearch">
+            <svg class="admin-member-lists-detail-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+            </svg>
+            <span>상세검색</span>
+          </button>
+        </div>
+      </div>
+      <div id="memberDetailSearch" x-cloak x-show="detailSearchOpen" class="admin-member-lists-advanced">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="date_type">기간검색</label>
+          <div class="admin-form-content admin-member-lists-range">
+            <select id="date_type" name="date_type" class="admin-input admin-input-default">
+              <option value="created_at" {{ is_selected(filters.date_type, 'created_at', true) }}>가입일</option>
+              <option value="last_login_at" {{ is_selected(filters.date_type, 'last_login_at') }}>최근 접속일</option>
+            </select>
+            <input id="date_start" name="date_start" type="date" class="admin-input admin-member-lists-date-input" value="{{ filters.date_start }}" aria-label="기간검색 시작일">
+            <span class="admin-member-lists-range-separator">-</span>
+            <input id="date_end" name="date_end" type="date" class="admin-input admin-member-lists-date-input" value="{{ filters.date_end }}" aria-label="기간검색 종료일">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="amount_type">금액검색</label>
+          <div class="admin-form-content admin-member-lists-range">
+            <select id="amount_type" name="amount_type" class="admin-input admin-input-default">
+              <option value="deposit" {{ is_selected(filters.amount_type, 'deposit', true) }}>적립금</option>
+              <option value="mileage" {{ is_selected(filters.amount_type, 'mileage') }}>포인트</option>
+            </select>
+            <input id="amount_min" name="amount_min" type="text" inputmode="numeric" class="admin-input admin-member-lists-amount-input" value="{{ filters.amount_min }}" placeholder="최소 금액" aria-label="금액검색 최소값">
+            <span class="admin-member-lists-range-separator">-</span>
+            <input id="amount_max" name="amount_max" type="text" inputmode="numeric" class="admin-input admin-member-lists-amount-input" value="{{ filters.amount_max }}" placeholder="최대 금액" aria-label="금액검색 최대값">
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <form id="memberExcelDownloadForm" class="admin-member-lists-download-form" method="post" action="/{{ setting.site.admin_directory }}/member/lists/download">
+    <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+    <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+    <input type="hidden" name="role" value="{{ filters.role }}">
+    <input type="hidden" name="approval_status" value="{{ filters.approval_status }}">
+    <input type="hidden" name="status" value="{{ filters.status }}">
+    <input type="hidden" name="keyword_type" value="{{ filters.keyword_type }}">
+    <input type="hidden" name="keyword" value="{{ filters.keyword }}">
+    <input type="hidden" name="date_type" value="{{ filters.date_type }}">
+    <input type="hidden" name="date_start" value="{{ filters.date_start }}">
+    <input type="hidden" name="date_end" value="{{ filters.date_end }}">
+    <input type="hidden" name="amount_type" value="{{ filters.amount_type }}">
+    <input type="hidden" name="amount_min" value="{{ filters.amount_min }}">
+    <input type="hidden" name="amount_max" value="{{ filters.amount_max }}">
+  </form>
+
+  <div class="admin-member-lists-actions">
+    <button type="submit" form="memberExcelDownloadForm" class="admin-btn-excel">
+      <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"></path>
+      </svg>
+      <span class="btn-text">엑셀 다운로드</span>
+    </button>
+    <a href="/{{ setting.site.admin_directory }}/member/register" class="admin-btn-primary">
+      <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"></path>
+      </svg>
+      <span>회원 등록</span>
+    </a>
+  </div>
+
+  <section x-data class="admin-card admin-member-lists-table-card">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">검색 결과 <span class="admin-badge-count">{{ pagination.total|number_format }}</span></h3>
+      <select form="memberSearchForm" name="limit" class="admin-input admin-select-sm" aria-label="목록 개수 선택" @change="$el.form.requestSubmit()">
+        {% for limit_option in limit_options %}
+        <option value="{{ limit_option }}" {{ is_selected(pagination.limit ~ '', limit_option ~ '') }}>{{ limit_option }}개씩 보기</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="admin-member-lists-table-wrap">
+      <table class="admin-member-lists-table">
+        <thead><tr><th class="admin-table-th">번호</th><th class="admin-table-th">회원타입</th><th class="admin-table-th">상호명 / 아이디</th><th class="admin-table-th">공급사 코드</th><th class="admin-table-th">대표자명</th><th class="admin-table-th">적립금</th><th class="admin-table-th">포인트</th><th class="admin-table-th">승인</th><th class="admin-table-th">상태</th><th class="admin-table-th">가입일</th><th class="admin-table-th">접속일</th><th class="admin-table-th">관리</th></tr></thead>
+        <tbody>
+          {% for member in members %}
+          <tr>
+            <td class="admin-table-td">{{ member.id }}</td>
+            <td class="admin-table-td"><span class="admin-member-lists-role is-{{ member.role|lower }}">{{ member.role_label }}</span></td>
+            <td class="admin-table-td admin-member-lists-company">{% if member.role == 'ADMIN' %}<strong class="admin-company-quick-menu-static">{{ member.company_name }}</strong>{% else %}<button type="button" class="admin-company-quick-menu-trigger" data-admin-company-quick-menu data-member-id="{{ member.id }}" data-company-name="{{ member.company_name }}" data-user-id="{{ member.user_id }}" data-role="{{ member.role }}"><strong>{{ member.company_name }}</strong></button>{% endif %}<span>{{ member.user_id }}</span></td>
+            <td class="admin-table-td admin-member-lists-code">{{ member.vendor_code }}</td>
+            <td class="admin-table-td admin-member-lists-contact"><strong>{{ member.name }}</strong><span>{{ member.mobile }}</span></td>
+            <td class="admin-table-td admin-member-lists-money is-deposit">{{ member.deposit }}</td>
+            <td class="admin-table-td admin-member-lists-money is-point">{{ member.point }}</td>
+            <td class="admin-table-td"><span class="admin-member-lists-approval-text{% if member.approval_status == '승인' %} is-approved{% elseif member.approval_status == '대기' %} is-waiting{% elseif member.approval_status == '반려' %} is-rejected{% endif %}">{{ member.approval_status }}</span></td>
+            <td class="admin-table-td"><span class="admin-member-lists-status-text{% if member.status == '정상' %} is-active{% elseif member.status in ['정지', '잠금'] %} is-suspended{% elseif member.status == '탈퇴' %} is-withdrawn{% endif %}">{{ member.status }}</span></td>
+            <td class="admin-table-td"><time>{{ member.joined_date }}{% if member.joined_time %}<br>({{ member.joined_time }}){% endif %}</time></td>
+            <td class="admin-table-td"><time>{{ member.last_login_date }}{% if member.last_login_time %}<br>({{ member.last_login_time }}){% endif %}</time></td>
+            <td class="admin-table-td"><a href="/{{ setting.site.admin_directory }}/member/detail/{{ member.id }}?return_url={{ current_url|url_encode }}" class="admin-member-detail-assets-link">상세</a></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td class="admin-table-td admin-member-lists-empty" colspan="12">검색 결과가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="admin-pagination">
+      <nav class="admin-pagination-nav" aria-label="회원 목록 페이지">
+        <a href="{{ pagination.prev_url }}" class="admin-pagination-prev{% if not pagination.has_prev %} disabled{% endif %}">이전</a>
+        <div class="admin-pagination-pages">
+          {% for page_item in pagination.pages %}
+          <a href="{{ page_item.url }}" class="admin-pagination-page{% if page_item.active %} active{% endif %}{% if page_item.desktop_only %} desktop-only{% endif %}">{{ page_item.number }}</a>
+          {% endfor %}
+        </div>
+        <a href="{{ pagination.next_url }}" class="admin-pagination-next{% if not pagination.has_next %} disabled{% endif %}">다음</a>
+      </nav>
+    </div>
+  </section>
+</section>
+{% endblock %}
+
+
+{% block appScript %}
+<script type="module" src="/dist/basic/js/admin/member/lists.js"></script>
+{% endblock %}

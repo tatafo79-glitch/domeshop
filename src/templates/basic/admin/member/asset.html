@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ asset.label }} 관리</title>
+  <link href="/dist/basic/css/admin.css?v=53" rel="stylesheet">
+  <script type="module" src="/dist/basic/js/vendor.js"></script>
+  <script type="module" src="/dist/{{ setting.skin.name }}/js/admin/member/asset.js?v=3"></script>
+</head>
+<body class="admin-frame-body">
+  <main class="admin-member-asset-frame">
+    {% if is_blocked %}
+    <section class="admin-card admin-member-asset-blocked">
+      <svg class="admin-member-asset-blocked-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m0 3.75h.008v.008H12V16.5zm9-4.5a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div class="admin-member-asset-blocked-body">
+        <span class="admin-member-asset-kicker">{{ member.role_label }} / {{ member.user_id }}</span>
+        <h1 class="admin-member-asset-blocked-title">{{ asset.label }} 관리 불가</h1>
+        <p class="admin-member-asset-blocked-message">{{ blocked_message }}</p>
+      </div>
+    </section>
+    {% else %}
+    <section class="admin-member-asset-head">
+      <div class="admin-member-asset-member">
+        <span class="admin-member-asset-kicker">{{ member.role_label }} / {{ member.user_id }}</span>
+        <h1 class="admin-member-asset-title">{{ member.company_name|default(member.name) }}</h1>
+      </div>
+      <div class="admin-member-asset-balance is-{{ asset.key }}">
+        <span>{{ asset.label }} 잔액</span>
+        <strong data-member-asset-balance>{{ asset.formatted_balance }}{{ asset.unit }}</strong>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-asset-adjust-card">
+      <div class="admin-card-header">
+        <h2 class="admin-card-title">{{ asset.label }} 적립 및 차감</h2>
+      </div>
+      <form class="admin-member-asset-form" method="post" action="/{{ setting.site.admin_directory }}/member/{{ asset.key }}/{{ member.id }}" data-member-asset-form novalidate>
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <div class="admin-member-detail-form-body">
+          <div class="admin-form-row">
+            <span class="admin-form-label">처리 구분</span>
+            <div class="admin-form-content admin-member-detail-control">
+              <div class="admin-member-detail-radio-group admin-member-asset-radio-group" role="radiogroup" aria-label="처리 구분">
+                <label class="admin-member-detail-radio"><input type="radio" name="action_type" value="plus" checked><span>적립</span></label>
+                <label class="admin-member-detail-radio"><input type="radio" name="action_type" value="minus"><span>차감</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="asset_amount">금액<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-member-detail-control">
+              <input id="asset_amount" name="amount" type="text" inputmode="numeric" class="admin-input admin-member-asset-input" placeholder="숫자만 입력">
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <label class="admin-form-label-top" for="asset_reason">변동 사유<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-member-detail-control">
+              <textarea id="asset_reason" name="reason" rows="3" class="admin-member-asset-textarea" placeholder="관리자 수동 조정 사유를 입력해 주세요."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="admin-member-asset-actions">
+          <button type="submit" class="admin-btn-primary">처리하기</button>
+        </div>
+      </form>
+    </section>
+
+
+    <form id="memberAssetDownloadForm" class="admin-member-asset-download-form" method="post" action="/{{ setting.site.admin_directory }}/member/{{ asset.key }}/{{ member.id }}/download">
+      <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+      <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+    </form>
+    <section class="admin-card admin-member-asset-history-card">
+      <div class="admin-card-header admin-member-asset-history-header">
+        <h2 class="admin-card-title">{{ asset.label }} 내역</h2>
+        <button type="submit" form="memberAssetDownloadForm" class="admin-btn-excel admin-member-asset-download-button">
+          <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"></path>
+          </svg>
+          <span class="btn-text">엑셀 다운로드</span>
+        </button>
+      </div>
+      <div class="admin-member-asset-history-table">
+        <div class="admin-member-asset-history-head">
+          <div>NO</div>
+          <div>사유</div>
+          <div>주문번호</div>
+          <div class="admin-member-asset-history-head-right">변동 수량</div>
+          <div class="admin-member-asset-history-head-right">변동 후 잔액</div>
+          <div>일시</div>
+        </div>
+        <div class="admin-member-asset-history-body">
+          {% for history in histories %}
+            <article class="admin-member-asset-history-row">
+              <span class="admin-member-asset-history-no">{{ pagination.offset + loop.index }}</span>
+              <p>{{ history.reason }}</p>
+              <span class="admin-member-asset-history-order">{{ history.order_no ?: '-' }}</span>
+              <span class="admin-member-asset-history-change {% if history.change_amount < 0 %}is-minus{% else %}is-plus{% endif %}">{{ history.formatted_change_amount }}{{ asset.unit }}</span>
+              <span class="admin-member-asset-history-balance">{{ history.formatted_balance_after }}{{ asset.unit }}</span>
+              <time class="admin-member-asset-history-date"><span>{{ history.created_date }}{% if history.created_time %}<br>({{ history.created_time }}){% endif %}</span><span class="admin-member-asset-history-actor">{{ history.actor_name ?: '-' }}</span></time>
+            </article>
+          {% else %}
+            <div class="admin-member-asset-empty">
+              <svg class="admin-member-asset-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+              <p class="admin-member-asset-empty-text">등록된 {{ asset.label }} 내역이 없습니다.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <nav class="admin-member-asset-pagination" aria-label="{{ asset.label }} 내역 페이지">
+        <a class="admin-member-asset-page-control{% if not pagination.has_prev %} is-disabled{% endif %}" href="?page={{ pagination.prev_page }}" aria-label="이전 페이지">이전</a>
+        <div class="admin-member-asset-page-list">
+          {% for page in pagination.pages %}
+          <a class="admin-member-asset-page-link{% if page == pagination.page %} is-active{% endif %}" href="?page={{ page }}" {% if page == pagination.page %}aria-current="page"{% endif %}>{{ page }}</a>
+          {% endfor %}
+        </div>
+        <a class="admin-member-asset-page-control{% if not pagination.has_next %} is-disabled{% endif %}" href="?page={{ pagination.next_page }}" aria-label="다음 페이지">다음</a>
+      </nav>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -17,7 +17,11 @@
       <a href="#" class="admin-outline-profile-menu-link">내 프로필</a>
       <a href="/{{ setting.site.admin_directory }}/member/my-profile" class="admin-outline-profile-menu-link">내 정보 수정</a>
       <div class="admin-outline-profile-menu-divider"></div>
-      <a href="/{{ setting.site.admin_directory }}/logout" class="admin-outline-profile-menu-link is-danger">로그아웃</a>
+      <form method="post" action="/{{ setting.site.admin_directory }}/logout" class="admin-outline-profile-menu-logout-form">
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <button type="submit" class="admin-outline-profile-menu-link is-danger">로그아웃</button>
+      </form>
     </div>
   </div>
 </div>

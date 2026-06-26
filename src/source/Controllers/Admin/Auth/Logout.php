@@ -7,6 +7,7 @@ namespace App\Controllers\Admin\Auth;
 use App\Controllers\Actions\Admin;
 use App\Settings\SettingInterface;
 use Psr\Http\Message\ResponseInterface as Response;
+use SlimSession\Helper as SessionHelper;
 
 class Logout extends Admin
 {
@@ -17,7 +18,7 @@ class Logout extends Admin
    */
   protected function action(): Response
   {
-    $this->container->get('session')->delete('admin');
+    SessionHelper::destroy();
     $adminDir = trim((string) ($this->container->get(SettingInterface::class)->get('site.admin_directory') ?? 'dmmt'), '/');
 
     return $this->redirect('/' . $adminDir . '/login');

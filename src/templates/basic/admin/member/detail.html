@@ -1,0 +1,481 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}회원 상세 / 수정{% endblock %}
+
+{% block contents %}
+<section class="admin-member-detail">
+  {% set mobile_parts = member.mobile|split('-') %}
+  {% set company_phone_parts = member.company_phone|split('-') %}
+  {% set fax_parts = member.fax|split('-') %}
+  {% set business_number_parts = member.business_number|split('-') %}
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">B2B 회원의 기본 정보, 사업자 정보, 정산 정보를 확인하고 수정합니다.</p>
+  </div>
+
+  {% if member_not_found %}
+  <section class="admin-card admin-member-detail-not-found">
+    <svg class="admin-member-detail-not-found-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v3.75m0 3.75h.008v.008H12V16.5zm9-4.5a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div class="admin-member-detail-not-found-body">
+      <h2 class="admin-member-detail-not-found-title">회원 정보 없음</h2>
+      <p class="admin-member-detail-not-found-message">{{ not_found_message }}</p>
+      <a href="{{ previous_url }}" class="admin-btn-secondary admin-member-detail-not-found-link">목록으로</a>
+    </div>
+  </section>
+  {% else %}
+  <div class="admin-member-detail-summary">
+    <article class="admin-member-detail-summary-card">
+      <span class="admin-member-detail-summary-label">업체명</span>
+      <strong class="admin-member-detail-summary-value is-company">{{ member.company_name }}</strong>
+      <span class="admin-member-detail-summary-sub">{{ member.summary_contact }}</span>
+    </article>
+    <article class="admin-member-detail-summary-card">
+      <span class="admin-member-detail-summary-label">회원타입</span>
+      <strong class="admin-member-detail-summary-value is-role is-{{ member.role|lower }}">{{ member.role_label }}</strong>
+      <span class="admin-member-detail-summary-sub">가입일 : {{ member.joined_at_display }} / 최근 접속일 : {{ member.last_login_at_display }}</span>
+    </article>
+    <article class="admin-member-detail-summary-card" data-member-role-card="assets-summary" data-visible-roles="SELLER,VENDOR"{% if member.role == 'ADMIN' %} hidden{% endif %}>
+      <span class="admin-member-detail-summary-label">적립금</span>
+      <strong class="admin-member-detail-summary-value is-deposit">{{ member.deposit }}원</strong>
+      <a href="/{{ setting.site.admin_directory }}/member/deposit/{{ member.id }}" class="admin-member-detail-summary-link" data-admin-iframe-modal data-admin-iframe-modal-title="개별 회원 적립금 관리">내역보기</a>
+    </article>
+    <article class="admin-member-detail-summary-card" data-member-role-card="assets-summary" data-visible-roles="SELLER,VENDOR"{% if member.role == 'ADMIN' %} hidden{% endif %}>
+      <span class="admin-member-detail-summary-label">포인트</span>
+      <strong class="admin-member-detail-summary-value is-point">{{ member.point }}P</strong>
+      <a href="/{{ setting.site.admin_directory }}/member/point/{{ member.id }}" class="admin-member-detail-summary-link" data-admin-iframe-modal data-admin-iframe-modal-title="개별 회원 포인트 관리">내역보기</a>
+    </article>
+  </div>
+
+  <div class="admin-member-detail-form" data-admin-member-detail-tabs>
+    <div class="admin-member-detail-tabs">
+      <nav class="admin-member-detail-tabs-nav" aria-label="회원 상세 탭">
+        <button type="button" class="admin-member-detail-tab-button is-active" data-admin-member-detail-tab="member-detail-tab-info" aria-controls="member-detail-tab-info" aria-selected="true">기본 정보</button>
+        <button type="button" class="admin-member-detail-tab-button" data-admin-member-detail-tab="member-detail-tab-memo" aria-controls="member-detail-tab-memo" aria-selected="false">관리자 메모 <span class="admin-member-detail-tab-badge">{{ admin_memos|length }}</span></button>
+        <button type="button" class="admin-member-detail-tab-button" data-admin-member-detail-tab="member-detail-tab-audit" aria-controls="member-detail-tab-audit" aria-selected="false">수정 이력 <span class="admin-member-detail-tab-badge">{{ audit_logs|length }}</span></button>
+      </nav>
+    </div>
+
+    <div id="member-detail-tab-info" class="admin-member-detail-tab-panel is-active" data-admin-member-detail-tab-panel>
+      <form id="memberDetailForm" class="admin-member-detail-edit-form" method="post" enctype="multipart/form-data" action="/{{ setting.site.admin_directory }}/member/detail/{{ member.id }}" novalidate>
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+    <section class="admin-card admin-member-detail-section">
+      <div class="admin-card-header admin-member-detail-basic-header">
+        <h3 class="admin-card-title">기본 정보</h3>
+        <div class="admin-member-detail-mobile-dates">
+          <span>가입일 : {{ member.joined_at_display }}</span>
+          <span>최근 접속일 : {{ member.last_login_at_display }}</span>
+        </div>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">아이디</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <strong class="admin-member-detail-static-text">{{ member.user_id }}</strong>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="password_new">비밀번호 변경</label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-password-group">
+              <input id="password_new" name="password_new" type="password" class="admin-input" autocomplete="new-password" placeholder="새 비밀번호">
+              <input id="password_confirm" name="password_confirm" type="password" class="admin-input" autocomplete="new-password" placeholder="비밀번호 확인">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="name">대표자명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="name" name="name" type="text" class="admin-input" value="{{ member.name }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="mobile_1">휴대폰<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-phone-group">
+              <input id="mobile_1" name="mobile_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" value="{{ mobile_parts[0]|default('') }}" aria-label="휴대폰 앞자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="mobile_2" name="mobile_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ mobile_parts[1]|default('') }}" aria-label="휴대폰 가운데자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="mobile_3" name="mobile_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ mobile_parts[2]|default('') }}" aria-label="휴대폰 끝자리">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="email">이메일<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="email" name="email" type="email" class="admin-input" value="{{ member.email }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">수신동의</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-agreement-group">
+              <label class="admin-member-detail-agreement">
+                <input type="hidden" name="is_email_agreed" value="0">
+                <input type="checkbox" name="is_email_agreed" value="1" class="admin-member-detail-agreement-input" {{ is_checked(member.is_email_agreed, '1') }}>
+                <span class="admin-member-detail-agreement-box">
+                  <svg class="admin-member-detail-agreement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </span>
+                <span class="admin-member-detail-agreement-text">이메일 수신 동의</span>
+              </label>
+              <label class="admin-member-detail-agreement">
+                <input type="hidden" name="is_sms_agreed" value="0">
+                <input type="checkbox" name="is_sms_agreed" value="1" class="admin-member-detail-agreement-input" {{ is_checked(member.is_sms_agreed, '1') }}>
+                <span class="admin-member-detail-agreement-box">
+                  <svg class="admin-member-detail-agreement-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </span>
+                <span class="admin-member-detail-agreement-text">SMS 수신 동의</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="admin-card admin-member-detail-section admin-member-detail-account-card">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">계정상태</h3>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">회원 유형</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="회원 유형">
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="SELLER" {{ is_checked(member.role, 'SELLER') }}><span>판매사</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="VENDOR" {{ is_checked(member.role, 'VENDOR') }}><span>공급사</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="role" value="ADMIN" {{ is_checked(member.role, 'ADMIN') }}><span>관리자</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row" data-member-role-card="approval" data-visible-roles="SELLER,VENDOR"{% if member.role == 'ADMIN' %} hidden{% endif %}>
+          <span class="admin-form-label">승인 상태</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="승인 상태">
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="APPROVED" {{ is_checked(member.approval_status_code, 'APPROVED') }}><span>승인</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="PENDING" {{ is_checked(member.approval_status_code, 'PENDING') }}><span>대기</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="approval_status" value="REJECTED" {{ is_checked(member.approval_status_code, 'REJECTED') }}><span>반려</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">계정 상태</span>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-radio-group" role="radiogroup" aria-label="계정 상태">
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="ACTIVE" {{ is_checked(member.status_code, 'ACTIVE') }}><span>정상</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="SUSPENDED" {{ is_checked(member.status_code, 'SUSPENDED') }}><span>잠금</span></label>
+              <label class="admin-member-detail-radio"><input type="radio" name="status" value="WITHDRAWN" {{ is_checked(member.status_code, 'WITHDRAWN') }}><span>탈퇴</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section admin-member-detail-assets-card" data-member-role-card="assets" data-visible-roles="SELLER,VENDOR"{% if member.role == 'ADMIN' %} hidden{% endif %}>
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">보유자산</h3>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">적립금 잔액</span>
+          <div class="admin-form-content admin-member-detail-assets-content">
+            <strong class="admin-member-detail-assets-value is-deposit">{{ member.deposit }}원</strong>
+            <a href="/{{ setting.site.admin_directory }}/member/deposit/{{ member.id }}" class="admin-member-detail-assets-link" data-admin-iframe-modal data-admin-iframe-modal-title="개별 회원 적립금 관리">내역조회</a>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">포인트 잔액</span>
+          <div class="admin-form-content admin-member-detail-assets-content">
+            <strong class="admin-member-detail-assets-value is-point">{{ member.point }}P</strong>
+            <a href="/{{ setting.site.admin_directory }}/member/point/{{ member.id }}" class="admin-member-detail-assets-link" data-admin-iframe-modal data-admin-iframe-modal-title="개별 회원 포인트 관리">내역조회</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section" data-member-role-card="business" data-visible-roles="SELLER,VENDOR"{% if member.role == 'ADMIN' %} hidden{% endif %}>
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">사업자 정보</h3>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="company_name">상호명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="company_name" name="company_name" type="text" class="admin-input" value="{{ member.company_name }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_number_1">사업자 등록번호<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-number-group">
+              <input id="business_number_1" name="business_number_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" value="{{ business_number_parts[0]|default('') }}" aria-label="사업자 등록번호 앞자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="business_number_2" name="business_number_2" type="text" inputmode="numeric" maxlength="2" class="admin-input" value="{{ business_number_parts[1]|default('') }}" aria-label="사업자 등록번호 가운데자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="business_number_3" name="business_number_3" type="text" inputmode="numeric" maxlength="5" class="admin-input" value="{{ business_number_parts[2]|default('') }}" aria-label="사업자 등록번호 끝자리">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_license_file_upload">사업자등록증<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-upload-field upload-field">
+              <input type="hidden" name="business_license_file" value="{{ member.business_license_file }}">
+              <div class="admin-member-detail-upload-card">
+                <div class="admin-member-detail-upload-preview" aria-hidden="true">
+                  {% if member.business_license_file %}
+                    {% set business_license_file_url = member.business_license_file starts with 'http' ? member.business_license_file : setting.cdn_info.image_path|default('') ~ member.business_license_file %}
+                    <img src="{{ business_license_file_url }}" alt="사업자등록증 이미지" class="admin-member-detail-upload-preview-image" data-image-preview="{{ business_license_file_url }}" data-image-preview-title="사업자등록증 이미지">
+                  {% else %}
+                    <svg class="admin-member-detail-upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  {% endif %}
+                </div>
+                <div class="admin-member-detail-upload-info">
+                  <strong class="admin-member-detail-upload-title">사업자등록증 이미지</strong>
+                  <span class="admin-member-detail-upload-desc">JPG, PNG 형식의 이미지 파일을 등록해 주세요.</span>
+                  <div class="upload-controls admin-member-detail-upload-controls">
+                    <label for="business_license_file_upload" class="upload-select-btn admin-member-detail-upload-button">이미지 선택</label>
+                    <input id="business_license_file_upload" name="business_license_file_upload" type="file" accept="image/*" class="upload-file-input">
+                    <span class="upload-file-name">{{ member.business_license_file|default('등록된 파일 없음') }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_type">업태<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="business_type" name="business_type" type="text" class="admin-input" value="{{ member.business_type }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="business_item">종목<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="business_item" name="business_item" type="text" class="admin-input" value="{{ member.business_item }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="company_phone_1">회사 전화<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-phone-group">
+              <input id="company_phone_1" name="company_phone_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" value="{{ company_phone_parts[0]|default('') }}" aria-label="회사 전화 앞자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="company_phone_2" name="company_phone_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ company_phone_parts[1]|default('') }}" aria-label="회사 전화 가운데자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="company_phone_3" name="company_phone_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ company_phone_parts[2]|default('') }}" aria-label="회사 전화 끝자리">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="fax_1">팩스</label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-phone-group">
+              <input id="fax_1" name="fax_1" type="text" inputmode="numeric" maxlength="3" class="admin-input" value="{{ fax_parts[0]|default('') }}" aria-label="팩스 앞자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="fax_2" name="fax_2" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ fax_parts[1]|default('') }}" aria-label="팩스 가운데자리">
+              <span class="admin-member-detail-phone-separator">-</span>
+              <input id="fax_3" name="fax_3" type="text" inputmode="numeric" maxlength="4" class="admin-input" value="{{ fax_parts[2]|default('') }}" aria-label="팩스 끝자리">
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="zip_code">사업장 주소<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-address-group">
+              <div class="admin-member-detail-address-main">
+                <input id="zip_code" name="zip_code" type="text" class="admin-input admin-member-detail-address-trigger" data-admin-postcode data-postcode-target="#zip_code" data-address-target="#address" data-detail-address-target="#address_detail" value="{{ member.zip_code }}" readonly aria-label="우편번호">
+                <input id="address" name="address" type="text" class="admin-input admin-member-detail-address-trigger" data-admin-postcode data-postcode-target="#zip_code" data-address-target="#address" data-detail-address-target="#address_detail" value="{{ member.address }}" readonly aria-label="주소">
+              </div>
+              <input id="address_detail" name="address_detail" type="text" class="admin-input" value="{{ member.address_detail }}" aria-label="상세 주소">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-member-detail-section" data-member-role-card="settlement" data-visible-roles="VENDOR"{% if member.role != 'VENDOR' %} hidden{% endif %}>
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">정산 정보</h3>
+      </div>
+      <div class="admin-member-detail-form-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="bank_name">은행명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <select id="bank_name" name="bank_name" class="admin-input">
+              <option value="">은행 선택</option>
+              {% for bank in banks %}
+                <option value="{{ bank.name }}"{% if member.bank_name == bank.name %} selected{% endif %}>{{ bank.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="account_number">계좌번호<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="account_number" name="account_number" type="text" class="admin-input" value="{{ member.account_number }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="account_holder">예금주<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <input id="account_holder" name="account_holder" type="text" class="admin-input" value="{{ member.account_holder }}">
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="bank_book_file_upload">통장사본<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-member-detail-control">
+            <div class="admin-member-detail-upload-field upload-field">
+              <input type="hidden" name="bank_book_file" value="{{ member.bank_book_file }}">
+              <div class="admin-member-detail-upload-card">
+                <div class="admin-member-detail-upload-preview" aria-hidden="true">
+                  {% if member.bank_book_file %}
+                    {% set bank_book_file_url = member.bank_book_file starts with 'http' ? member.bank_book_file : setting.cdn_info.image_path|default('') ~ member.bank_book_file %}
+                    <img src="{{ bank_book_file_url }}" alt="통장사본 이미지" class="admin-member-detail-upload-preview-image" data-image-preview="{{ bank_book_file_url }}" data-image-preview-title="통장사본 이미지">
+                  {% else %}
+                    <svg class="admin-member-detail-upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  {% endif %}
+                </div>
+                <div class="admin-member-detail-upload-info">
+                  <strong class="admin-member-detail-upload-title">통장사본 이미지</strong>
+                  <span class="admin-member-detail-upload-desc">정산 계좌 확인을 위한 통장사본 이미지를 등록해 주세요.</span>
+                  <div class="upload-controls admin-member-detail-upload-controls">
+                    <label for="bank_book_file_upload" class="upload-select-btn admin-member-detail-upload-button">이미지 선택</label>
+                    <input id="bank_book_file_upload" name="bank_book_file_upload" type="file" accept="image/*" class="upload-file-input">
+                    <span class="upload-file-name">{{ member.bank_book_file|default('등록된 파일 없음') }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="admin-member-detail-bottom-actions">
+      <a href="{{ previous_url }}" class="admin-btn-secondary">이전으로</a>
+      <button type="submit" class="admin-btn-primary">저장</button>
+    </div>
+      </form>
+    </div>
+
+    <div id="member-detail-tab-memo" class="admin-member-detail-tab-panel" data-admin-member-detail-tab-panel hidden>
+      <section class="admin-card admin-member-detail-memo-card">
+        <div class="admin-card-header admin-member-detail-memo-write-header">
+          <h3 class="admin-card-title admin-member-detail-icon-title">
+            <svg class="admin-member-detail-title-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+            신규 메모 작성
+          </h3>
+        </div>
+        <div class="admin-member-detail-memo-write-body">
+          <form action="/{{ setting.site.admin_directory }}/member/memo/{{ member.id }}" method="post" class="admin-member-detail-memo-form" data-member-memo-form>
+            <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+            <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+            <textarea name="memo_content" rows="3" placeholder="회원과 관련된 특이사항을 남겨주세요." class="admin-member-detail-memo-textarea"></textarea>
+            <div class="admin-member-detail-memo-actions">
+              <button type="submit" class="admin-btn-primary admin-member-detail-memo-submit">등록하기</button>
+            </div>
+          </form>
+        </div>
+        <div class="admin-member-detail-memo-list-wrap">
+          <div class="admin-member-detail-memo-timeline">
+            {% for memo in admin_memos %}
+              <article class="admin-member-detail-memo-item">
+                <span class="admin-member-detail-memo-dot" aria-hidden="true"></span>
+                <div class="admin-member-detail-memo-meta">
+                  <span class="admin-member-detail-memo-author">{{ memo.admin_name }}</span>
+                  <time class="admin-member-detail-memo-date">{{ memo.created_at }}</time>
+                </div>
+                <div class="admin-member-detail-memo-content">{{ memo.memo_content }}</div>
+                <form action="/{{ setting.site.admin_directory }}/member/memo/delete/{{ memo.id }}" method="post" class="admin-member-detail-memo-delete-form" data-member-memo-delete-form>
+                  <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+                  <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+                  <input type="hidden" name="member_id" value="{{ member.id }}">
+                  <button type="submit" class="admin-member-detail-memo-delete">
+                    <svg class="admin-member-detail-delete-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    삭제
+                  </button>
+                </form>
+              </article>
+            {% else %}
+              <div class="admin-member-detail-memo-empty">
+                <svg class="admin-member-detail-memo-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="admin-member-detail-memo-empty-text">등록된 관리자 메모가 없습니다.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="member-detail-tab-audit" class="admin-member-detail-tab-panel" data-admin-member-detail-tab-panel hidden>
+      <section class="admin-card admin-member-detail-audit-card">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">수정 이력 (Audit Logs)</h3>
+        </div>
+        <div class="admin-member-detail-audit-table">
+          <div class="admin-member-detail-audit-head">
+            <div class="admin-member-detail-audit-date-col">일시</div>
+            <div class="admin-member-detail-audit-actor-col">작업자</div>
+            <div class="admin-member-detail-audit-change-col">변경 내용</div>
+            <div class="admin-member-detail-audit-ip-col">접속 IP</div>
+          </div>
+          <div class="admin-member-detail-audit-body">
+            {% for audit in audit_logs %}
+              <article class="admin-member-detail-audit-row">
+                <div class="admin-member-detail-audit-mobile-head">
+                  <time class="admin-member-detail-audit-date">{{ audit.created_at }}</time>
+                  <span class="admin-member-detail-audit-actor"><span>{{ audit.modifier_name }}</span></span>
+                  <span class="admin-member-detail-audit-mobile-ip">{{ audit.ip_address|default('-') }}</span>
+                </div>
+                <div class="admin-member-detail-audit-changes">
+                  {% for change in audit.changes %}
+                    <div class="admin-member-detail-audit-change-item">
+                      <span class="admin-member-detail-audit-field"><span class="admin-member-detail-audit-field-dot"></span><span>{{ change.field }}</span></span>
+                      <div class="admin-member-detail-audit-values">
+                        <span class="admin-member-detail-audit-old">{{ change.old }}</span>
+                        <svg class="admin-member-detail-audit-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        <span class="admin-member-detail-audit-new">{{ change.new }}</span>
+                      </div>
+                    </div>
+                  {% else %}
+                    <div class="admin-member-detail-audit-empty">변경 항목이 없습니다.</div>
+                  {% endfor %}
+                </div>
+                <div class="admin-member-detail-audit-ip">{{ audit.ip_address|default('-') }}</div>
+              </article>
+            {% else %}
+              <div class="admin-member-detail-audit-empty-state">
+                <svg class="admin-member-detail-audit-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="admin-member-detail-audit-empty-text">수정 이력이 없습니다.</p>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block appScript %}
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/member/detail.js?v=10"></script>
+{% endblock %}

@@ -10,6 +10,7 @@ CREATE TABLE `member_assets_history` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '발생 일시',
   PRIMARY KEY (`id`),
   KEY `idx_member_asset` (`member_id`,`asset_type`),
+  KEY `idx_asset_created_id` (`asset_type`,`created_at`,`id`),
   KEY `idx_order_no` (`order_no`),
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='회원 적립금 및 포인트 통합 변동 내역';
