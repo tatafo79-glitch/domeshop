@@ -94,10 +94,105 @@ const showMessage = async (message: string): Promise<void> => {
   await window.uiAlert?.(message);
 };
 
+const stripNumberFormatting = (value: string): string => value.replace(/,/g, '').trim();
+
+const isFormattedNumericInput = (field: Element | null): field is HTMLInputElement => field instanceof HTMLInputElement
+  && field.form === form
+  && field.getAttribute('inputmode') === 'numeric';
+
+const formatNumberDisplay = (value: string): string => {
+  const normalized = stripNumberFormatting(value);
+  if (normalized === '') {
+    return '';
+  }
+
+  if (numericPattern.test(normalized) !== true) {
+    return value;
+  }
+
+  return Number.parseInt(normalized, 10).toLocaleString('ko-KR');
+};
+
+const resolveNumericCaretPosition = (value: string, digitOffset: number): number => {
+  if (digitOffset <= 0) {
+    return 0;
+  }
+
+  let passedDigits = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    if (/\d/.test(value[index] ?? '')) {
+      passedDigits += 1;
+    }
+    if (passedDigits >= digitOffset) {
+      return index + 1;
+    }
+  }
+
+  return value.length;
+};
+
+const formatNumericInputValue = (input: HTMLInputElement): void => {
+  const rawValue = input.value;
+  if (/^[0-9,]*$/.test(rawValue) !== true) {
+    return;
+  }
+
+  const selectionStart = input.selectionStart ?? rawValue.length;
+  const digitOffset = rawValue.slice(0, selectionStart).replace(/[^0-9]/g, '').length;
+  const formattedValue = formatNumberDisplay(rawValue);
+  input.value = formattedValue;
+
+  const caretPosition = resolveNumericCaretPosition(formattedValue, digitOffset);
+  input.setSelectionRange(caretPosition, caretPosition);
+};
+
+const initFormattedNumericInputs = (): void => {
+  if (!form) {
+    return;
+  }
+
+  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"]').forEach((input: HTMLInputElement): void => {
+    input.value = formatNumberDisplay(input.value);
+  });
+
+  form.addEventListener('input', (event: Event): void => {
+    if (isFormattedNumericInput(event.target as Element | null)) {
+      formatNumericInputValue(event.target);
+    }
+  });
+};
+
+const createNormalizedFormData = (): FormData => {
+  if (!form) {
+    return new FormData();
+  }
+
+  const formData = new FormData(form);
+  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"][name]').forEach((input: HTMLInputElement): void => {
+    if (!input.disabled) {
+      formData.set(input.name, stripNumberFormatting(input.value));
+    }
+  });
+
+  if (getCheckedValue('price_policy') !== 'COMPLY') {
+    formData.set('compliance_price', '0');
+  }
+
+  if (getCheckedValue('shipping_type') !== 'QUANTITY') {
+    formData.set('shipping_qty_limit', '0');
+  }
+
+  return formData;
+};
+
 const getValue = (fieldName: string): string => {
   const field = form?.elements.namedItem(fieldName);
 
-  if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) {
+  if (field instanceof HTMLInputElement) {
+    return isFormattedNumericInput(field) ? stripNumberFormatting(field.value) : field.value.trim();
+  }
+
+  if (field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) {
     return field.value.trim();
   }
 
@@ -144,6 +239,43 @@ const validateNumber = (fieldName: string, label: string, min = 0): ValidationRe
   return null;
 };
 
+const getOriginSelectValue = (fieldId: string): string => document.querySelector<HTMLSelectElement>(`#${fieldId}`)?.value ?? '';
+
+const getOriginSelectText = (fieldId: string): string => {
+  const select = document.querySelector<HTMLSelectElement>(`#${fieldId}`);
+
+  return select?.selectedOptions[0]?.textContent?.trim() ?? '';
+};
+
+const validateOriginSelection = (): ValidationResult | null => {
+  const originType = getOriginSelectText('originDepth1');
+  const originDepth2 = getOriginSelectValue('originDepth2');
+  const originDepth3 = getOriginSelectValue('originDepth3');
+
+  if (getOriginSelectValue('originDepth1') === '') {
+    return { message: '원산지를 선택해 주세요.', field: 'originDepth1' };
+  }
+
+  if (originType.includes('해외')) {
+    if (originDepth2 === '') {
+      return { message: '대륙을 선택해 주세요.', field: 'originDepth2' };
+    }
+    if (originDepth3 === '') {
+      return { message: '나라를 선택해 주세요.', field: 'originDepth3' };
+    }
+  }
+
+  if (originType.includes('국내') && originDepth2 !== '' && originDepth3 === '') {
+    return { message: '시군구를 선택해 주세요.', field: 'originDepth3' };
+  }
+
+  if (getValue('origin') === '') {
+    return { message: '원산지를 선택해 주세요.', field: 'originDepth1' };
+  }
+
+  return null;
+};
+
 
 const validateGoodsRegisterForm = (): ValidationResult | null => {
 
@@ -156,15 +288,16 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
     return { message: '상품명을 입력해 주세요.', field: 'name' };
   }
 
-  if (getValue('origin') === '') {
-    return { message: '원산지를 선택해 주세요.', field: 'originDepth1' };
+  const originResult = validateOriginSelection();
+  if (originResult) {
+    return originResult;
   }
 
   if (getValue('manufacturer') === '') {
     return { message: '제조사를 입력해 주세요.', field: 'manufacturer' };
   }
 
-  if (getCheckedValue('goods_type') !== '' && !goodsTypeAllowlist.includes(getCheckedValue('goods_type'))) {
+  if (!goodsTypeAllowlist.includes(getCheckedValue('goods_type'))) {
     return { message: '상품타입을 올바르게 선택해 주세요.', field: 'goods_type' };
   }
 
@@ -388,6 +521,7 @@ const createOptionInput = (name: string, value: string, alignRight = false, disa
   input.className = (alignRight ? 'admin-goods-register-option-input is-number' : 'admin-goods-register-option-input') + (compact ? ' is-compact' : '');
   if (alignRight) {
     input.inputMode = 'numeric';
+    input.setAttribute('inputmode', 'numeric');
   }
   input.disabled = disabled;
 
@@ -876,28 +1010,6 @@ const syncCategorySearch = (): void => {
   resultLayer.hidden = false;
 };
 
-const getAdminDir = (): string => document.querySelector<HTMLMetaElement>('meta[name="admin-dir"]')?.content || window.location.pathname.split('/')[1] || 'dmmt';
-
-const initMarginCalculator = (): void => {
-  const button = document.querySelector<HTMLButtonElement>('#openMarginCalcBtn');
-  if (!button) {
-    return;
-  }
-
-  button.addEventListener('click', (): void => {
-    const sellPrice = document.querySelector<HTMLInputElement>('#sell_price')?.value.replace(/[^0-9]/g, '') ?? '';
-    const supplyPrice = document.querySelector<HTMLInputElement>('#supply_price')?.value.replace(/[^0-9]/g, '') ?? '';
-    const shippingFeeRow = document.querySelector<HTMLElement>('[data-shipping-fee-row]');
-    const shippingFeeInput = document.querySelector<HTMLInputElement>('#shipping_fee');
-    const shippingFee = shippingFeeRow?.hidden ? '' : shippingFeeInput?.value.replace(/[^0-9]/g, '') ?? '';
-    const params = new URLSearchParams({ sell_price: sellPrice, supply_price: supplyPrice, shipping_fee: shippingFee });
-    const url = `/${getAdminDir()}/goods/margin-calc?${params.toString()}`;
-
-    window.dispatchEvent(new CustomEvent('open-iframe-modal', {
-      detail: { src: url, title: '마진 계산기', widthClass: 'lg:w-[900px]' },
-    }));
-  });
-};
 const initCategoryPicker = (): void => {
   renderCategoryColumns();
   setSelectedCategory(null);
@@ -1045,6 +1157,39 @@ const origins = parseJsonData('#goodsOriginData')
   .filter((item): item is OriginItem => item !== null)
   .sort((a: OriginItem, b: OriginItem): number => a.level - b.level || a.sort - b.sort || a.id - b.id);
 
+const originRootFallbacks = new Map<number, OriginItem>();
+const getOriginRowsWithFallbackRoots = (): OriginItem[] => {
+  const rootRows = origins.filter((origin: OriginItem): boolean => origin.level === 0);
+  const rootCodes = new Set(rootRows.map((origin: OriginItem): number => origin.id));
+
+  origins.forEach((origin: OriginItem): void => {
+    if (origin.cd0 === null || origin.pathnm0.trim() === '') {
+      return;
+    }
+    if (rootCodes.has(origin.cd0)) {
+      return;
+    }
+    if (originRootFallbacks.has(origin.cd0)) {
+      return;
+    }
+    originRootFallbacks.set(origin.cd0, {
+      id: origin.cd0,
+      nm: origin.pathnm0,
+      cd0: null,
+      cd1: null,
+      pathnm0: '',
+      pathnm1: '',
+      level: 0,
+      sort: origin.sort,
+      last: 'N',
+    });
+  });
+
+  return [...rootRows, ...Array.from(originRootFallbacks.values()), ...origins.filter((origin: OriginItem): boolean => origin.level !== 0)];
+};
+
+const originsWithFallbackRoots = getOriginRowsWithFallbackRoots();
+
 const appendOriginOptions = (select: HTMLSelectElement, rows: OriginItem[], placeholder: string): void => {
   select.replaceChildren();
   const empty = document.createElement('option');
@@ -1094,7 +1239,14 @@ const initOriginSelects = (): void => {
     return '';
   };
 
-  const getSelectedOrigin = (select: HTMLSelectElement): OriginItem | null => origins.find((origin: OriginItem): boolean => String(origin.id) === select.value) ?? null;
+  const getSelectedOrigin = (select: HTMLSelectElement): OriginItem | null => {
+    const selectedOption = select.selectedOptions[0] ?? null;
+    if (selectedOption?.dataset.originFallback === 'Y') {
+      return originRootFallbacks.get(Number(select.value)) ?? null;
+    }
+
+    return originsWithFallbackRoots.find((origin: OriginItem): boolean => String(origin.id) === select.value) ?? null;
+  };
   const updateVisibility = (): void => {
     const rootType = getOriginRootType(getSelectedOrigin(depth1));
     const showDepth2 = rootType === 'domestic' || rootType === 'overseas';
@@ -1137,34 +1289,15 @@ const initOriginSelects = (): void => {
     empty.value = '';
     empty.textContent = '원산지 선택';
     depth1.append(empty);
-    const rootRows = origins.filter((origin: OriginItem): boolean => origin.level === 0);
-    const fallbackRootMap = new Map<number, OriginItem>();
-    if (rootRows.length === 0) {
-      origins.forEach((origin: OriginItem): void => {
-        if (origin.cd0 === null || origin.pathnm0.trim() === '') {
-          return;
-        }
-        if (fallbackRootMap.has(origin.cd0)) {
-          return;
-        }
-        fallbackRootMap.set(origin.cd0, {
-          id: origin.cd0,
-          nm: origin.pathnm0,
-          cd0: null,
-          cd1: null,
-          pathnm0: '',
-          pathnm1: '',
-          level: 0,
-          sort: origin.sort,
-          last: 'N',
-        });
-      });
-    }
-    const firstDepthRows = rootRows.length > 0 ? rootRows : Array.from(fallbackRootMap.values());
+    const rootRows = originsWithFallbackRoots.filter((origin: OriginItem): boolean => origin.level === 0);
+    const firstDepthRows = rootRows.sort((a: OriginItem, b: OriginItem): number => a.sort - b.sort || a.id - b.id);
     firstDepthRows.forEach((origin: OriginItem): void => {
       const option = document.createElement('option');
       option.value = String(origin.id);
       option.textContent = normalizeOriginRootName(origin.nm);
+      if (originRootFallbacks.has(origin.id)) {
+        option.dataset.originFallback = 'Y';
+      }
       depth1.append(option);
     });
   };
@@ -1582,6 +1715,11 @@ const initOptionTitleInputState = (): void => {
 };
 const syncConditionalFields = (): void => {
   const pricePolicy = getCheckedValue('price_policy');
+  const compliancePriceInput = document.querySelector<HTMLInputElement>('#compliance_price');
+  if (compliancePriceInput && pricePolicy !== 'COMPLY') {
+    compliancePriceInput.value = '0';
+  }
+
   document.querySelectorAll<HTMLElement>('[data-price-policy-field]').forEach((row: HTMLElement): void => {
     const isVisible = row.dataset.pricePolicyField === pricePolicy;
     row.hidden = !isVisible;
@@ -1589,6 +1727,16 @@ const syncConditionalFields = (): void => {
   });
 
   const shippingType = getCheckedValue('shipping_type');
+  const shippingQtyLimitInput = document.querySelector<HTMLInputElement>('#shipping_qty_limit');
+  if (shippingQtyLimitInput) {
+    const currentQtyLimit = stripNumberFormatting(shippingQtyLimitInput.value);
+    if (shippingType !== 'QUANTITY') {
+      shippingQtyLimitInput.value = '0';
+    } else if (currentQtyLimit === '' || currentQtyLimit === '0') {
+      shippingQtyLimitInput.value = '1';
+    }
+  }
+
   document.querySelectorAll<HTMLElement>('[data-shipping-fee-row]').forEach((row: HTMLElement): void => {
     const isVisible = shippingType !== 'FREE' && shippingType !== 'COD';
     row.hidden = !isVisible;
@@ -1755,6 +1903,7 @@ syncOptionTogglePanels();
 initRadioIndicators();
 initOptionBuilder();
 initGoodsImageUploads();
+initFormattedNumericInputs();
 
 form?.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
   event.preventDefault();
@@ -1774,7 +1923,7 @@ form?.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
   setSubmitting(true);
 
   try {
-    const response = await window.axios.post<GoodsRegisterResponse>(form.action, new FormData(form), {
+    const response = await window.axios.post<GoodsRegisterResponse>(form.action, createNormalizedFormData(), {
       headers: {
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
@@ -1804,22 +1953,3 @@ form?.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
     setSubmitting(false);
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

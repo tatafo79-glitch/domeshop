@@ -13,6 +13,8 @@ use Slim\Routing\RouteCollectorProxy as RouteGroup;
  * @return void
  */
 return function (RouteGroup $group): void {
+  $group->get('/goods/margin-calc', Goods\MarginCalc\Page::class);
+  $group->get('/goods/form', Goods\Register\Page::class);
   $group->get('/goods/register', Goods\Register\Page::class);
   $group->post('/goods/register', Goods\Register\Post::class);
 };

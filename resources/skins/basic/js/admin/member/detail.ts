@@ -627,7 +627,7 @@ const initMemberMemoForms = (): void => {
         return;
       }
 
-      const confirmed = await window.uiConfirm?.('메모를 삭제하시겠습니까?', 'Confirm');
+      const confirmed = await window.uiConfirm?.('메모를 삭제하시겠습니까?', '확인');
       if (confirmed !== true) {
         return;
       }

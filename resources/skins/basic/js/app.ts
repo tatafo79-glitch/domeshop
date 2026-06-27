@@ -141,6 +141,17 @@ if (document.readyState === 'loading') {
 interface AdminIframeModalDetail {
   src: string;
   title?: string;
+  size?: 'default' | 'margin-calc';
+}
+
+interface AdminMarginApplyMessage {
+  type?: string;
+  sellPrice?: number;
+  supplyPrice?: number;
+  shippingFee?: number;
+  targetSelector?: string;
+  supplyTargetSelector?: string;
+  shippingTargetSelector?: string;
 }
 
 const closeAdminIframeModal = (root: HTMLElement): void => {
@@ -158,10 +169,16 @@ const openAdminIframeModal = (detail: AdminIframeModalDetail): void => {
 
   const root = document.createElement('div');
   root.className = 'admin-iframe-modal';
+  if (detail.size === 'margin-calc') {
+    root.classList.add('is-margin-calc');
+  }
   root.setAttribute('role', 'presentation');
 
   const panel = document.createElement('section');
   panel.className = 'admin-iframe-modal-panel';
+  if (detail.size === 'margin-calc') {
+    panel.classList.add('is-margin-calc');
+  }
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
   panel.tabIndex = -1;
@@ -229,6 +246,7 @@ const initAdminIframeModal = (): void => {
     openAdminIframeModal({
       src: customEvent.detail?.src ?? '',
       title: customEvent.detail?.title ?? '',
+      size: customEvent.detail?.size ?? 'default',
     });
   });
 
@@ -256,9 +274,19 @@ const initAdminIframeModal = (): void => {
       return;
     }
 
-    const data = event.data as { type?: string };
+    const data = event.data as AdminMarginApplyMessage;
     if (data.type === 'member-assets-updated') {
       document.body.dataset.memberAssetsUpdated = '1';
+    }
+
+    if (data.type === 'admin-margin-calc-apply') {
+      applyAdminMarginCalculatorResult(data);
+    }
+
+    if (data.type === 'admin-iframe-modal-close') {
+      document.querySelectorAll<HTMLElement>('.admin-iframe-modal').forEach((modal: HTMLElement): void => {
+        closeAdminIframeModal(modal);
+      });
     }
   });
 };
@@ -267,6 +295,102 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initAdminIframeModal);
 } else {
   initAdminIframeModal();
+}
+
+const getAdminDirectory = (): string => document.querySelector<HTMLMetaElement>('meta[name="admin-dir"]')?.content
+  || window.location.pathname.split('/').filter(Boolean)[0]
+  || 'dmmt';
+
+const getNumericInputValue = (selector: string): string => document.querySelector<HTMLInputElement>(selector)
+  ?.value
+  .replace(/[^0-9]/g, '') ?? '';
+
+const isHiddenBySelector = (selector: string): boolean => {
+  const element = document.querySelector<HTMLElement>(selector);
+
+  return element?.hidden === true;
+};
+
+const openAdminMarginCalculator = (trigger: HTMLElement): void => {
+  const supplyTarget = trigger.dataset.marginSupplyTarget || (document.querySelector<HTMLInputElement>('#supply_price') ? '#supply_price' : '#supplyPriceInput');
+  const sellTarget = trigger.dataset.marginSellTarget || (document.querySelector<HTMLInputElement>('#sell_price') ? '#sell_price' : '#sellPriceInput');
+  const shippingTarget = trigger.dataset.marginShippingTarget || (document.querySelector<HTMLInputElement>('#shipping_fee') ? '#shipping_fee' : '#shippingFeeInput');
+  const shippingRow = trigger.dataset.marginShippingRow || '';
+  const shippingFee = shippingRow !== '' && isHiddenBySelector(shippingRow) ? '' : getNumericInputValue(shippingTarget);
+  const params = new URLSearchParams({
+    supply_price: getNumericInputValue(supplyTarget),
+    sell_price: getNumericInputValue(sellTarget),
+    shipping_fee: shippingFee,
+    target: sellTarget,
+    supply_target: supplyTarget,
+    shipping_target: shippingTarget,
+  });
+  const source = trigger.dataset.marginSource || '';
+  if (source !== '') {
+    params.set('source', source);
+  }
+
+  openAdminIframeModal({
+    src: `/${getAdminDirectory()}/goods/margin-calc?${params.toString()}`,
+    title: trigger.dataset.marginTitle || '마진 계산기',
+    size: 'margin-calc',
+  });
+};
+
+const isAllowedMarginTargetSelector = (selector: string): boolean => {
+  const isIdSelector = /^#[A-Za-z][A-Za-z0-9_-]*$/i.test(selector);
+  const isNameSelector = /^\[name="[A-Za-z0-9_-]+"\]$/i.test(selector);
+
+  return isIdSelector || isNameSelector;
+};
+
+const setMarginTargetValue = (selector: string, value: number | undefined): void => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || !isAllowedMarginTargetSelector(selector)) {
+    return;
+  }
+
+  const target = document.querySelector<HTMLInputElement>(selector);
+  if (!target) {
+    return;
+  }
+
+  target.value = String(Math.round(value));
+  target.dispatchEvent(new Event('input', { bubbles: true }));
+  target.dispatchEvent(new Event('change', { bubbles: true }));
+};
+
+const applyAdminMarginCalculatorResult = (data: AdminMarginApplyMessage): void => {
+  setMarginTargetValue(data.targetSelector || '#sell_price', data.sellPrice);
+  setMarginTargetValue(data.supplyTargetSelector || '#supply_price', data.supplyPrice);
+  setMarginTargetValue(data.shippingTargetSelector || '#shipping_fee', data.shippingFee);
+
+  document.querySelectorAll<HTMLElement>('.admin-iframe-modal').forEach((modal: HTMLElement): void => {
+    closeAdminIframeModal(modal);
+  });
+};
+
+const initAdminMarginCalculator = (): void => {
+  document.addEventListener('click', (event: MouseEvent): void => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const trigger = target.closest<HTMLElement>('[data-admin-margin-calculator], #openMarginCalcBtn');
+    if (!trigger) {
+      return;
+    }
+
+    event.preventDefault();
+    openAdminMarginCalculator(trigger);
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminMarginCalculator);
+} else {
+  initAdminMarginCalculator();
 }
 type KakaoPostcodeData = {
   zonecode?: string;
@@ -628,7 +752,7 @@ const openAdminUiDialog = (options: AdminUiDialogOptions): Promise<boolean> => n
 
   const title = document.createElement('h2');
   title.className = 'admin-ui-dialog-title';
-  title.textContent = options.title || 'Notice';
+  title.textContent = options.title || '알림';
 
   const message = document.createElement('p');
   message.className = 'admin-ui-dialog-message';
@@ -640,12 +764,12 @@ const openAdminUiDialog = (options: AdminUiDialogOptions): Promise<boolean> => n
   const confirmButton = document.createElement('button');
   confirmButton.type = 'button';
   confirmButton.className = 'admin-ui-dialog-button is-primary';
-  confirmButton.textContent = options.confirmText || 'OK';
+  confirmButton.textContent = options.confirmText || '확인';
 
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
   cancelButton.className = 'admin-ui-dialog-button is-secondary';
-  cancelButton.textContent = options.cancelText || 'Cancel';
+  cancelButton.textContent = options.cancelText || '취소';
 
   if (options.showCancel === true) {
     actions.append(cancelButton);
@@ -682,7 +806,7 @@ window.uiAlert = (message: string, title?: string): Promise<void> => openAdminUi
 
 window.uiConfirm = (message: string, title?: string): Promise<boolean> => openAdminUiDialog({
   message,
-  title: title || 'Confirm',
+  title: title || '확인',
   showCancel: true,
 });
 

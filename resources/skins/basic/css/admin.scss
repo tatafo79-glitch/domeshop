@@ -516,16 +516,40 @@ $admin-tile: #272729;
     @apply hidden pl-8;
   }
 
-  .admin-outline-nav-group.is-open .admin-outline-nav-submenu {
+  .admin-outline-nav-group.is-open > .admin-outline-nav-submenu {
     @apply block;
   }
 
   .admin-outline-nav-submenu-link {
-    @apply block rounded-lg px-3 py-2 text-[13px] text-slate-400 transition-colors hover:text-white;
+    @apply block w-full cursor-pointer rounded-lg bg-transparent px-3 py-2 text-left text-[13px] text-slate-400 transition-colors hover:text-white;
   }
 
   .admin-outline-nav-submenu-link.is-active {
     @apply text-white;
+  }
+
+  .admin-outline-nav-subgroup {
+    @apply space-y-1;
+  }
+
+  .admin-outline-nav-submenu-toggle {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .admin-outline-nav-submenu-arrow {
+    @apply h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform;
+  }
+
+  .admin-outline-nav-submenu-arrow.is-open {
+    @apply rotate-180;
+  }
+
+  .admin-outline-nav-nested-submenu {
+    @apply hidden pl-4;
+  }
+
+  .admin-outline-nav-subgroup.is-open > .admin-outline-nav-nested-submenu {
+    @apply block;
   }
   .admin-dashboard {
     @apply flex flex-col gap-6;
@@ -2208,6 +2232,10 @@ $admin-tile: #272729;
     @apply fixed inset-0 z-[110] flex items-center justify-center bg-black/40 px-4 py-6 opacity-0 transition-opacity;
   }
 
+  .admin-iframe-modal.is-margin-calc {
+    @apply px-4 py-4;
+  }
+
   .admin-iframe-modal.is-open {
     @apply opacity-100;
   }
@@ -2215,6 +2243,10 @@ $admin-tile: #272729;
   .admin-iframe-modal-panel {
     @apply flex h-full max-h-[860px] w-full max-w-6xl -translate-y-4 flex-col overflow-hidden border bg-white outline-none transition-transform lg:h-[80dvh] lg:max-h-none;
     border-color: $admin-hairline;
+  }
+
+  .admin-iframe-modal-panel.is-margin-calc {
+    @apply h-[calc(100dvh-32px)] max-h-[calc(100dvh-32px)] w-full max-w-[900px] lg:h-[90dvh] lg:max-h-[90dvh];
   }
 
   .admin-iframe-modal.is-open .admin-iframe-modal-panel {
@@ -2254,7 +2286,15 @@ $admin-tile: #272729;
   }
 
   .admin-iframe-modal-frame {
-    @apply min-h-0 flex-1 border-0 bg-slate-50;
+    @apply min-h-0 w-full flex-1 overflow-auto border-0 bg-slate-50;
+  }
+
+  .admin-frame-html {
+    @apply h-full overflow-hidden;
+  }
+
+  .admin-frame-body {
+    @apply h-full overflow-y-auto;
   }
 
   .admin-frame-body {
@@ -2266,6 +2306,111 @@ $admin-tile: #272729;
     @apply flex min-h-dvh flex-col gap-4 p-4 sm:p-5;
   }
 
+  .admin-goods-margin-calc-frame {
+    @apply flex min-h-dvh flex-col gap-6 p-4 sm:p-6;
+  }
+
+  .admin-goods-margin-calc-head {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+
+  .admin-goods-margin-calc-summary {
+    @apply grid grid-cols-3 overflow-hidden border bg-white;
+    border-color: $admin-hairline;
+  }
+
+  .admin-goods-margin-calc-summary-item {
+    @apply flex min-h-[82px] flex-col items-center justify-center gap-1 border-r px-2 py-3 text-center last:border-r-0 sm:min-h-[88px] sm:gap-1.5 sm:px-4 sm:py-4;
+    border-color: $admin-hairline;
+  }
+
+
+  .admin-goods-margin-calc-summary-item > span:first-child,
+  .admin-goods-margin-calc-summary-item > strong {
+    @apply break-keep text-[13px] font-semibold text-slate-500;
+  }
+
+  .admin-goods-margin-calc-summary-item > strong {
+    @apply text-[14px] text-slate-900 sm:text-[16px];
+    letter-spacing: 0;
+  }
+
+  .admin-goods-margin-calc-summary-input {
+    @apply flex items-center justify-center gap-1;
+  }
+
+  .admin-goods-margin-calc-summary-input .admin-input {
+    @apply w-16 px-1.5 py-1 text-right text-[14px] font-semibold text-blue-600 transition-colors focus:bg-blue-50 sm:w-28 sm:px-2 sm:text-[16px];
+  }
+
+  .admin-goods-margin-calc-summary-input.is-percent .admin-input {
+    @apply w-14 sm:w-24;
+  }
+
+  .admin-goods-margin-calc-summary-input em {
+    @apply not-italic text-[13px] font-semibold text-blue-600 sm:text-[15px];
+  }
+
+  .admin-goods-margin-calc-grid {
+    @apply grid grid-cols-1 gap-6 md:grid-cols-2;
+  }
+
+  .admin-goods-margin-calc-card {
+    @apply flex flex-col;
+  }
+
+  .admin-goods-margin-calc-card .admin-card-header {
+    @apply flex-row flex-nowrap items-center;
+  }
+
+  .admin-goods-margin-calc-platform {
+    @apply w-32 shrink-0 sm:w-36;
+  }
+
+  .admin-goods-margin-calc-fields {
+    @apply flex flex-col;
+  }
+
+  .admin-goods-margin-calc-row {
+    @apply flex min-h-[62px] border-b last:border-b-0;
+    border-color: $admin-hairline;
+  }
+
+  .admin-goods-margin-calc-card.is-site .admin-goods-margin-calc-row:last-child {
+    @apply md:border-b;
+  }
+
+  .admin-goods-margin-calc-row > span:first-child {
+    @apply flex w-35 shrink-0 items-center border-r px-4 text-[13px] font-semibold text-slate-700;
+    background-color: $admin-pearl;
+    border-color: $admin-hairline;
+  }
+
+  .admin-goods-margin-calc-row > span:first-child.is-danger {
+    @apply text-red-500;
+  }
+
+  .admin-goods-margin-calc-unit-input {
+    @apply relative flex flex-1 items-center p-4;
+  }
+
+  .admin-goods-margin-calc-unit-input .admin-input {
+    @apply pr-10 text-right;
+  }
+
+  .admin-goods-margin-calc-unit-input em {
+    @apply pointer-events-none absolute right-7 top-1/2 -translate-y-1/2 not-italic text-[13px] font-normal text-slate-500;
+  }
+
+  .admin-goods-margin-calc-actions {
+    @apply flex justify-center gap-3;
+  }
+
+  .admin-goods-margin-calc-actions .admin-btn-primary,
+  .admin-goods-margin-calc-actions .admin-btn-secondary {
+    @apply px-8;
+  }
   .admin-member-asset-head {
     @apply flex flex-col gap-3 border bg-white p-5 sm:flex-row sm:items-center sm:justify-between;
     border-color: $admin-hairline;
@@ -3317,25 +3462,3 @@ $admin-tile: #272729;
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

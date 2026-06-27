@@ -100,6 +100,44 @@ class GoodsRepository extends BaseRepository
       return [];
     }
   }
+
+  /**
+   * 상품 원산지를 ID로 조회합니다.
+   *
+   * @param int $id 원산지 ID
+   *
+   * @return array|null
+   */
+  public function getGoodsOriginById(int $id): ?array
+  {
+    return $this->db->fetchRow(
+      'SELECT id, nm, cd0, cd1, pathnm0, pathnm1, level, sort, last
+        FROM goods_origins
+        WHERE id = ?
+        LIMIT 1',
+      [$id]
+    );
+  }
+
+  /**
+   * 0단계 루트 행이 없는 원산지 데이터에서 루트 정보를 조회합니다.
+   *
+   * @param int $rootCode 원산지 루트 코드
+   *
+   * @return array|null
+   */
+  public function getGoodsOriginRootByCode(int $rootCode): ?array
+  {
+    return $this->db->fetchRow(
+      'SELECT cd0 AS id, pathnm0 AS nm, cd0, NULL AS cd1, pathnm0, NULL AS pathnm1, 0 AS level, MIN(sort) AS sort, ? AS last
+        FROM goods_origins
+        WHERE cd0 = ? AND pathnm0 <> ?
+        GROUP BY cd0, pathnm0
+        LIMIT 1',
+      ['N', $rootCode, '']
+    );
+  }
+
   /**
    * 활성 카테고리를 ID로 조회합니다.
    *

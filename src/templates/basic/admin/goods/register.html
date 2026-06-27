@@ -99,9 +99,9 @@
           <div class="admin-form-content admin-goods-register-control is-stacked">
             <input id="selectedOriginStr" name="origin" type="hidden" value="">
             <div class="admin-goods-register-origin-wrapper is-initial">
-              <select id="originDepth1" class="admin-input" aria-label="원산지 구분"><option value="">원산지 선택</option></select>
-              <select id="originDepth2" class="admin-input" aria-label="원산지 2차 선택" hidden><option value="">지역선택</option></select>
-              <select id="originDepth3" class="admin-input" aria-label="원산지 3차 선택" hidden><option value="">시군구선택</option></select>
+              <select id="originDepth1" name="origin_depth1" class="admin-input" aria-label="원산지 구분"><option value="">원산지 선택</option></select>
+              <select id="originDepth2" name="origin_depth2" class="admin-input" aria-label="원산지 2차 선택" hidden><option value="">지역선택</option></select>
+              <select id="originDepth3" name="origin_depth3" class="admin-input" aria-label="원산지 3차 선택" hidden><option value="">시군구선택</option></select>
             </div>
           </div>
         </div>
@@ -187,7 +187,7 @@
           <label class="admin-form-label" for="sell_price">판매가<span class="admin-required-mark" aria-hidden="true">*</span></label>
           <div class="admin-form-content admin-goods-register-price-control">
             <span class="admin-goods-register-unit-input"><input id="sell_price" name="sell_price" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="0"><span class="admin-goods-register-unit">원</span></span>
-            <button type="button" id="openMarginCalcBtn" class="admin-goods-register-margin-button"><svg class="admin-goods-register-margin-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span>마진 계산기</span></button>
+            <button type="button" id="openMarginCalcBtn" class="admin-goods-register-margin-button" data-admin-margin-calculator data-margin-source="goods-form" data-margin-supply-target="#supply_price" data-margin-sell-target="#sell_price" data-margin-shipping-target="#shipping_fee" data-margin-shipping-row="[data-shipping-fee-row]"><svg class="admin-goods-register-margin-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span>마진 계산기</span></button>
             <label class="admin-goods-register-inline-check"><input type="hidden" name="sell_price_fixed" value="N"><input type="checkbox" name="sell_price_fixed" value="Y"><span>판매가 고정</span></label>
           </div>
         </div>
@@ -420,27 +420,5 @@
 {% endblock %}
 
 {% block appScript %}
-<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/register.js?v=19"></script>
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/register.js?v=21"></script>
 {% endblock %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

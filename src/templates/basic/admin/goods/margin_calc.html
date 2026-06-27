@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko" class="admin-frame-html">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마진 계산기</title>
+  <link href="/dist/{{ setting.skin.name }}/css/admin.css?v=70" rel="stylesheet">
+  <script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/margin_calc.js?v=2"></script>
+</head>
+<body class="admin-frame-body" data-default-market-fee="0" data-default-shipping-fee="0">
+  <main class="admin-goods-margin-calc-frame" id="mcContentWrapper" data-margin-calc>
+    <div class="admin-goods-margin-calc-head">
+      <p class="admin-page-desc">판매가격, 공급가, 수수료 등을 입력하여 마진율과 판매이익을 계산합니다.</p>
+    </div>
+
+    <section class="admin-goods-margin-calc-summary" aria-live="polite">
+      <div class="admin-goods-margin-calc-summary-item">
+        <span>정산금액</span>
+        <strong><span id="mcSettlement">0</span> 원</strong>
+      </div>
+      <label class="admin-goods-margin-calc-summary-item" for="mcProfit">
+        <span>목표 판매이익 입력</span>
+        <span class="admin-goods-margin-calc-summary-input">
+          <input id="mcProfit" type="text" inputmode="numeric" class="admin-input" value="0" data-margin-input="target-profit">
+          <em>원</em>
+        </span>
+      </label>
+      <label class="admin-goods-margin-calc-summary-item" for="mcMarginRate">
+        <span>목표 마진율 입력</span>
+        <span class="admin-goods-margin-calc-summary-input is-percent">
+          <input id="mcMarginRate" type="text" inputmode="decimal" class="admin-input" value="0.0" data-margin-input="target-rate">
+          <em>%</em>
+        </span>
+      </label>
+    </section>
+
+    <div class="admin-goods-margin-calc-grid">
+      <section class="admin-card admin-goods-margin-calc-card is-site">
+        <div class="admin-card-header">
+          <h2 class="admin-card-title">사이트</h2>
+        </div>
+        <div class="admin-goods-margin-calc-fields">
+          <label class="admin-goods-margin-calc-row" for="mcSellPrice">
+            <span>판매가격</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcSellPrice" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.sell_price|number_format }}" data-margin-input="sell">
+              <em>원</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcRecvShipping">
+            <span>배송비</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcRecvShipping" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.shipping_fee|number_format }}" data-margin-input="recv-shipping">
+              <em>원</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcSupplyPrice">
+            <span class="is-danger">매입가(공급가)</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcSupplyPrice" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.supply_price|number_format }}" data-margin-input="supply">
+              <em>원</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcSentShipping">
+            <span>실제 배송비</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcSentShipping" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.shipping_fee|number_format }}" data-margin-input="sent-shipping">
+              <em>원</em>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="admin-card admin-goods-margin-calc-card">
+        <div class="admin-card-header">
+          <h2 class="admin-card-title">플랫폼</h2>
+          <select id="mcPlatformSelect" class="admin-input admin-goods-margin-calc-platform" aria-label="플랫폼 선택">
+            <option value="" data-market="0" data-shipping="0">플랫폼 선택</option>
+            <option value="smartstore" data-market="5.63" data-shipping="3.3">스마트스토어</option>
+            <option value="coupang" data-market="10.8" data-shipping="3.3">쿠팡</option>
+          </select>
+        </div>
+        <div class="admin-goods-margin-calc-fields">
+          <label class="admin-goods-margin-calc-row" for="mcMarketFee">
+            <span>플랫폼 수수료</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcMarketFee" type="text" inputmode="decimal" class="admin-input" placeholder="0" value="0" data-margin-input="market-fee">
+              <em>%</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcShippingFee">
+            <span>배송비 수수료</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcShippingFee" type="text" inputmode="decimal" class="admin-input" placeholder="0" value="0" data-margin-input="shipping-fee-rate">
+              <em>%</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcDisplayPriceInput">
+            <span>노출가격</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcDisplayPriceInput" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="0" data-margin-input="display-price">
+              <em>원</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcInstantDiscountRate">
+            <span>즉시 할인</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcInstantDiscountRate" type="text" inputmode="decimal" class="admin-input" placeholder="0" value="0" data-margin-input="instant-discount">
+              <em>%</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcAddDiscountRate">
+            <span>부가 할인</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcAddDiscountRate" type="text" inputmode="decimal" class="admin-input" placeholder="0" value="" data-margin-input="add-discount">
+              <em>%</em>
+            </span>
+          </label>
+          <label class="admin-goods-margin-calc-row" for="mcAddFlatDiscount">
+            <span>부가 정액 할인</span>
+            <span class="admin-goods-margin-calc-unit-input">
+              <input id="mcAddFlatDiscount" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="" data-margin-input="flat-discount">
+              <em>원</em>
+            </span>
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <div class="admin-goods-margin-calc-actions">
+      <button type="button" class="admin-btn-secondary" id="mcResetBtn">초기화</button>
+      {% if calculator.can_apply %}<button type="button" class="admin-btn-primary" id="mcApplyBtn">폼에 적용하기</button>{% endif %}
+    </div>
+  </main>
+</body>
+</html>
+
+

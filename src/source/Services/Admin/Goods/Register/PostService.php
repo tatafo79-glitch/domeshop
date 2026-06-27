@@ -125,15 +125,13 @@ class PostService extends BaseService
       return $this->fail('상품명은 255자 이하로 입력해 주세요.', 'name');
     }
 
-    $origin = trim((string) ($data['origin'] ?? ''));
-    if ($origin === '') {
-      return $this->fail('원산지를 선택해 주세요.', 'originDepth1');
+    $originResult = $this->normalizeOrigin($data);
+    if (($originResult['success'] ?? false) !== true) {
+      return $originResult;
     }
+    $origin = (string) $originResult['value'];
 
     $goodsType = trim((string) ($data['goods_type'] ?? ''));
-    if ($goodsType === '') {
-      $goodsType = 'NORMAL';
-    }
     if (!in_array($goodsType, self::GOODS_TYPES, true)) {
       return $this->fail('상품타입을 올바르게 선택해 주세요.', 'goods_type');
     }
@@ -181,12 +179,16 @@ class PostService extends BaseService
       return $pricePolicyResult;
     }
 
-    $compliancePriceResult = $this->normalizeRequiredInt($data, 'compliance_price', '준수가격은 0 이상의 숫자로 입력해 주세요.', 'compliance_price');
-    if (($compliancePriceResult['success'] ?? false) !== true) {
-      return $compliancePriceResult;
-    }
-    if ($pricePolicyResult['value'] === 'COMPLY' && (int) $compliancePriceResult['value'] < 1) {
-      return $this->fail('가격준수 선택 시 준수가격은 1 이상 입력해 주세요.', 'compliance_price');
+    $compliancePrice = 0;
+    if ($pricePolicyResult['value'] === 'COMPLY') {
+      $compliancePriceResult = $this->normalizeRequiredInt($data, 'compliance_price', '준수가격은 0 이상의 숫자로 입력해 주세요.', 'compliance_price');
+      if (($compliancePriceResult['success'] ?? false) !== true) {
+        return $compliancePriceResult;
+      }
+      if ((int) $compliancePriceResult['value'] < 1) {
+        return $this->fail('가격준수 선택 시 준수가격은 1 이상 입력해 주세요.', 'compliance_price');
+      }
+      $compliancePrice = (int) $compliancePriceResult['value'];
     }
 
     $stockResult = $this->normalizeRequiredInt($data, 'stock', '재고 수량은 0 이상의 숫자로 입력해 주세요.', 'stock');
@@ -261,7 +263,7 @@ class PostService extends BaseService
       'sell_price' => (int) $sellPriceResult['value'],
       'sell_price_fixed' => $sellPriceFixedResult['value'],
       'price_policy' => $pricePolicyResult['value'],
-      'compliance_price' => (int) $compliancePriceResult['value'],
+      'compliance_price' => $compliancePrice,
       'stock' => (int) $stockResult['value'],
       'stock_link' => $stockLinkResult['value'],
       'soldout' => (int) $soldoutResult['value'],
@@ -372,6 +374,220 @@ class PostService extends BaseService
   }
 
   /**
+   * 원산지 단계 선택값을 검증하고 저장 문자열을 생성합니다.
+   *
+   * @param array $data 입력 데이터
+   *
+   * @return array
+   */
+  private function normalizeOrigin(array $data): array
+  {
+    $depth1Id = $this->normalizeOriginId($data, 'origin_depth1');
+    if ($depth1Id === null) {
+      return $this->fail('원산지를 선택해 주세요.', 'originDepth1');
+    }
+
+    $depth1 = $this->resolveOriginRoot($depth1Id);
+    if ($depth1 === null) {
+      return $this->fail('원산지를 올바르게 선택해 주세요.', 'originDepth1');
+    }
+
+    $rootLabel = $this->normalizeOriginRootName((string) ($depth1['nm'] ?? ''));
+    $rootType = $this->getOriginRootType($rootLabel);
+    if ($rootType === 'overseas') {
+      return $this->normalizeOverseasOrigin($data, (int) ($depth1['id'] ?? 0), $rootLabel);
+    }
+
+    if ($rootType === 'domestic') {
+      return $this->normalizeDomesticOrigin($data, (int) ($depth1['id'] ?? 0), $rootLabel);
+    }
+
+    return ['success' => true, 'value' => $rootLabel];
+  }
+
+  /**
+   * 원산지 1차 루트 정보를 조회합니다.
+   *
+   * @param int $depth1Id 원산지 1차 ID 또는 루트 코드
+   *
+   * @return array|null
+   */
+  private function resolveOriginRoot(int $depth1Id): ?array
+  {
+    $origin = $this->repo?->getGoodsOriginById($depth1Id);
+    if ($origin !== null && (int) ($origin['level'] ?? -1) === 0) {
+      return $origin;
+    }
+
+    // 원산지 데이터가 0단계 루트 행 없이 cd0/pathnm0만 가진 경우를 지원합니다.
+    return $this->repo?->getGoodsOriginRootByCode($depth1Id);
+  }
+
+  /**
+   * 해외 원산지의 대륙/나라 선택값을 검증합니다.
+   *
+   * @param array $data 입력 데이터
+   * @param int $rootId 원산지 1차 ID
+   * @param string $rootLabel 원산지 1차 라벨
+   *
+   * @return array
+   */
+  private function normalizeOverseasOrigin(array $data, int $rootId, string $rootLabel): array
+  {
+    $depth2Id = $this->normalizeOriginId($data, 'origin_depth2');
+    if ($depth2Id === null) {
+      return $this->fail('대륙을 선택해 주세요.', 'originDepth2');
+    }
+
+    $depth2 = $this->repo?->getGoodsOriginById($depth2Id);
+    if (!$this->isOriginChild($depth2, $rootId, null, 1)) {
+      return $this->fail('대륙을 올바르게 선택해 주세요.', 'originDepth2');
+    }
+
+    $depth3Id = $this->normalizeOriginId($data, 'origin_depth3');
+    if ($depth3Id === null) {
+      return $this->fail('나라를 선택해 주세요.', 'originDepth3');
+    }
+
+    $depth3 = $this->repo?->getGoodsOriginById($depth3Id);
+    if (!$this->isOriginChild($depth3, $rootId, (int) ($depth2['id'] ?? 0), 2)) {
+      return $this->fail('나라를 올바르게 선택해 주세요.', 'originDepth3');
+    }
+
+    return [
+      'success' => true,
+      'value' => $rootLabel . '|' . (string) ($depth2['nm'] ?? '') . '|' . (string) ($depth3['nm'] ?? ''),
+    ];
+  }
+
+  /**
+   * 국내 원산지의 지역/시군구 선택값을 검증합니다.
+   *
+   * @param array $data 입력 데이터
+   * @param int $rootId 원산지 1차 ID
+   * @param string $rootLabel 원산지 1차 라벨
+   *
+   * @return array
+   */
+  private function normalizeDomesticOrigin(array $data, int $rootId, string $rootLabel): array
+  {
+    $depth2Id = $this->normalizeOriginId($data, 'origin_depth2');
+    if ($depth2Id === null) {
+      return ['success' => true, 'value' => $rootLabel];
+    }
+
+    $depth2 = $this->repo?->getGoodsOriginById($depth2Id);
+    if (!$this->isOriginChild($depth2, $rootId, null, 1)) {
+      return $this->fail('지역을 올바르게 선택해 주세요.', 'originDepth2');
+    }
+
+    $depth3Id = $this->normalizeOriginId($data, 'origin_depth3');
+    if ($depth3Id === null) {
+      return $this->fail('시군구를 선택해 주세요.', 'originDepth3');
+    }
+
+    $depth3 = $this->repo?->getGoodsOriginById($depth3Id);
+    if (!$this->isOriginChild($depth3, $rootId, (int) ($depth2['id'] ?? 0), 2)) {
+      return $this->fail('시군구를 올바르게 선택해 주세요.', 'originDepth3');
+    }
+
+    return [
+      'success' => true,
+      'value' => $rootLabel . '|' . (string) ($depth2['nm'] ?? '') . '|' . (string) ($depth3['nm'] ?? ''),
+    ];
+  }
+
+  /**
+   * 원산지 ID 입력값을 정수로 정규화합니다.
+   *
+   * @param array $data 입력 데이터
+   * @param string $field 필드명
+   *
+   * @return int|null
+   */
+  private function normalizeOriginId(array $data, string $field): ?int
+  {
+    $value = trim((string) ($data[$field] ?? ''));
+    if ($value === '') {
+      return null;
+    }
+
+    if (preg_match('/^[0-9]+$/', $value) !== 1 || (int) $value < 1) {
+      return null;
+    }
+
+    return (int) $value;
+  }
+
+  /**
+   * 원산지 루트명을 화면 라벨과 동일하게 정규화합니다.
+   *
+   * @param string $name 원산지명
+   *
+   * @return string
+   */
+  private function normalizeOriginRootName(string $name): string
+  {
+    $trimmedName = trim($name);
+    if (str_contains($trimmedName, '국내')) {
+      return '국내';
+    }
+
+    if (str_contains($trimmedName, '해외')) {
+      return '해외';
+    }
+
+    return $trimmedName;
+  }
+
+  /**
+   * 원산지 루트 타입을 판별합니다.
+   *
+   * @param string $label 원산지 루트 라벨
+   *
+   * @return string
+   */
+  private function getOriginRootType(string $label): string
+  {
+    if (str_contains($label, '국내')) {
+      return 'domestic';
+    }
+
+    if (str_contains($label, '해외')) {
+      return 'overseas';
+    }
+
+    return $label === '' ? '' : 'other';
+  }
+
+  /**
+   * 원산지 하위 단계 관계를 검증합니다.
+   *
+   * @param array|null $origin 원산지 행
+   * @param int $rootId 원산지 1차 ID
+   * @param int|null $parentId 원산지 2차 ID
+   * @param int $level 기대 단계
+   *
+   * @return bool
+   */
+  private function isOriginChild(?array $origin, int $rootId, ?int $parentId, int $level): bool
+  {
+    if ($origin === null || (int) ($origin['level'] ?? -1) !== $level) {
+      return false;
+    }
+
+    if ((int) ($origin['cd0'] ?? 0) !== $rootId) {
+      return false;
+    }
+
+    if ($parentId !== null && (int) ($origin['cd1'] ?? 0) !== $parentId) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * 배송비 데이터를 검증합니다.
    *
    * @param array $data 입력 데이터
@@ -387,7 +603,6 @@ class PostService extends BaseService
 
     $fields = [
       'shipping_fee' => '기본 배송비는 0 이상의 숫자로 입력해 주세요.',
-      'shipping_qty_limit' => '합포장 기준 수량은 1 이상의 숫자로 입력해 주세요.',
       'extra_shipping_jeju' => '제주 추가 배송비는 0 이상의 숫자로 입력해 주세요.',
       'extra_shipping_island' => '도서산간 추가 배송비는 0 이상의 숫자로 입력해 주세요.',
       'return_shipping_fee' => '반품 배송비는 0 이상의 숫자로 입력해 주세요.',
@@ -396,12 +611,20 @@ class PostService extends BaseService
 
     $values = [];
     foreach ($fields as $field => $message) {
-      $min = $field === 'shipping_qty_limit' ? 1 : 0;
-      $result = $this->normalizeRequiredInt($data, $field, $message, $field, $min);
+      $result = $this->normalizeRequiredInt($data, $field, $message, $field);
       if (($result['success'] ?? false) !== true) {
         return $result;
       }
       $values[$field] = (int) $result['value'];
+    }
+
+    $values['shipping_qty_limit'] = 0;
+    if ($shippingTypeResult['value'] === 'QUANTITY') {
+      $qtyLimitResult = $this->normalizeRequiredInt($data, 'shipping_qty_limit', '합포장 기준 수량은 1 이상의 숫자로 입력해 주세요.', 'shipping_qty_limit', 1);
+      if (($qtyLimitResult['success'] ?? false) !== true) {
+        return $qtyLimitResult;
+      }
+      $values['shipping_qty_limit'] = (int) $qtyLimitResult['value'];
     }
 
     $hasExtraShippingResult = $this->normalizeFlag($data, 'has_extra_shipping', '추가 배송비 사용 여부를 올바르게 선택해 주세요.', 'has_extra_shipping');

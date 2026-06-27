@@ -18,6 +18,6 @@ class Page extends Admin
   {
     $result = $this->service->execute();
 
-    return $this->render('goods/form/register', $result);
+    return $this->render('goods/register', $result);
   }
 }
