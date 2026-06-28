@@ -202,6 +202,7 @@ class GoodsRepository extends BaseRepository
       'compliance_price',
       'shipping_type',
       'shipping_fee',
+      'actual_shipping_fee',
       'shipping_qty_limit',
       'has_extra_shipping',
       'extra_shipping_jeju',

@@ -66,6 +66,17 @@ interface UploadedGoodsImage {
   name: string;
 }
 
+interface GoodsRegisterSetting {
+  pricing_method: 'SUPPLY_PRICE' | 'MARGIN_RATE';
+  margin_rate: number;
+  rounding_unit: number;
+  rounding_type: 'CEIL' | 'ROUND' | 'FLOOR';
+  block_under_supply_price: string;
+  max_image_count: number;
+  max_option_count: number;
+  max_text_option_count: number;
+}
+
 declare global {
   interface Window {
     DomemallImageUpload?: DomemallImageUploadApi;
@@ -88,7 +99,45 @@ const soldoutAllowlist = ['0', '1'];
 const goodsTypeAllowlist = ['NORMAL', 'HEALTH', 'MEDICAL'];
 const goodsStatusAllowlist = ['NEW', 'USED', 'REFURB'];
 const taxTypeAllowlist = ['TAX', 'FREE'];
-const maxGoodsImageCount = 10;
+const parseGoodsRegisterSetting = (): GoodsRegisterSetting => {
+  const defaults: GoodsRegisterSetting = {
+    pricing_method: 'SUPPLY_PRICE',
+    margin_rate: 20,
+    rounding_unit: 10,
+    rounding_type: 'ROUND',
+    block_under_supply_price: 'Y',
+    max_image_count: 10,
+    max_option_count: 100,
+    max_text_option_count: 20,
+  };
+  const element = document.querySelector<HTMLScriptElement>('#goodsRegisterSettingData');
+  if (!element?.textContent) {
+    return defaults;
+  }
+
+  try {
+    const parsed = JSON.parse(element.textContent) as Partial<GoodsRegisterSetting>;
+    const parsedRoundingUnit = Number(parsed.rounding_unit);
+    const parsedMarginRate = Number(parsed.margin_rate);
+    return {
+      pricing_method: parsed.pricing_method === 'MARGIN_RATE' ? 'MARGIN_RATE' : 'SUPPLY_PRICE',
+      margin_rate: Number.isFinite(parsedMarginRate) ? Math.max(0, parsedMarginRate) : defaults.margin_rate,
+      rounding_unit: [1, 10, 100, 1000].includes(parsedRoundingUnit) ? parsedRoundingUnit : defaults.rounding_unit,
+      rounding_type: parsed.rounding_type === 'CEIL' || parsed.rounding_type === 'FLOOR' ? parsed.rounding_type : 'ROUND',
+      block_under_supply_price: parsed.block_under_supply_price === 'N' ? 'N' : 'Y',
+      max_image_count: Number.isFinite(Number(parsed.max_image_count)) ? Math.max(1, Number(parsed.max_image_count)) : defaults.max_image_count,
+      max_option_count: Number.isFinite(Number(parsed.max_option_count)) ? Math.max(1, Number(parsed.max_option_count)) : defaults.max_option_count,
+      max_text_option_count: Number.isFinite(Number(parsed.max_text_option_count)) ? Math.max(1, Number(parsed.max_text_option_count)) : defaults.max_text_option_count,
+    };
+  } catch (error: unknown) {
+    return defaults;
+  }
+};
+
+const registerSetting = parseGoodsRegisterSetting();
+const maxGoodsImageCount = registerSetting.max_image_count;
+const maxOptionCount = registerSetting.max_option_count;
+const maxTextOptionCount = registerSetting.max_text_option_count;
 
 const showMessage = async (message: string): Promise<void> => {
   await window.uiAlert?.(message);
@@ -99,6 +148,59 @@ const stripNumberFormatting = (value: string): string => value.replace(/,/g, '')
 const isFormattedNumericInput = (field: Element | null): field is HTMLInputElement => field instanceof HTMLInputElement
   && field.form === form
   && field.getAttribute('inputmode') === 'numeric';
+
+const roundCalculatedPrice = (price: number): number => {
+  const unit = registerSetting.rounding_unit > 0 ? registerSetting.rounding_unit : 1;
+  const scaled = price / unit;
+
+  if (registerSetting.rounding_type === 'CEIL') {
+    return Math.ceil(scaled) * unit;
+  }
+
+  if (registerSetting.rounding_type === 'FLOOR') {
+    return Math.floor(scaled) * unit;
+  }
+
+  return Math.round(scaled) * unit;
+};
+
+const calculateDefaultSellPrice = (supplyPrice: number): number | null => {
+  if (!Number.isFinite(supplyPrice) || supplyPrice < 0) {
+    return null;
+  }
+
+  const marginRate = Math.max(0, registerSetting.margin_rate) / 100;
+  const rawPrice = registerSetting.pricing_method === 'MARGIN_RATE'
+    ? (marginRate >= 1 ? null : supplyPrice / (1 - marginRate))
+    : supplyPrice * (1 + marginRate);
+
+  if (rawPrice === null || !Number.isFinite(rawPrice) || rawPrice < 0) {
+    return null;
+  }
+
+  return Math.max(0, roundCalculatedPrice(rawPrice));
+};
+
+const applyDefaultSellPrice = (): void => {
+  const supplyInput = document.querySelector<HTMLInputElement>('#supply_price');
+  const sellInput = document.querySelector<HTMLInputElement>('#sell_price');
+  if (!supplyInput || !sellInput || getFlagValue('sell_price_fixed') === 'Y') {
+    return;
+  }
+
+  const supplyValue = stripNumberFormatting(supplyInput.value);
+  if (supplyValue === '' || !numericPattern.test(supplyValue)) {
+    return;
+  }
+
+  const calculatedPrice = calculateDefaultSellPrice(Number.parseInt(supplyValue, 10));
+  if (calculatedPrice === null) {
+    return;
+  }
+
+  sellInput.value = formatNumberDisplay(String(calculatedPrice));
+  sellInput.dispatchEvent(new Event('change', { bubbles: true }));
+};
 
 const formatNumberDisplay = (value: string): string => {
   const normalized = stripNumberFormatting(value);
@@ -156,8 +258,19 @@ const initFormattedNumericInputs = (): void => {
   });
 
   form.addEventListener('input', (event: Event): void => {
-    if (isFormattedNumericInput(event.target as Element | null)) {
-      formatNumericInputValue(event.target);
+    const target = event.target as Element | null;
+    if (isFormattedNumericInput(target)) {
+      formatNumericInputValue(target);
+      if (target.id === 'supply_price') {
+        applyDefaultSellPrice();
+      }
+    }
+  });
+
+  form.querySelector<HTMLInputElement>('#supply_price')?.addEventListener('change', applyDefaultSellPrice);
+  form.querySelector<HTMLInputElement>('input[name="sell_price_fixed"][value="Y"]')?.addEventListener('change', (): void => {
+    if (getFlagValue('sell_price_fixed') !== 'Y') {
+      applyDefaultSellPrice();
     }
   });
 };
@@ -202,6 +315,21 @@ const getValue = (fieldName: string): string => {
 const getCheckedValue = (fieldName: string): string => form
   ?.querySelector<HTMLInputElement>(`input[name="${fieldName}"]:checked`)
   ?.value ?? '';
+
+const hasDetailContent = (content: string): boolean => {
+  const doc = new DOMParser().parseFromString(content, 'text/html');
+  const text = (doc.body.textContent ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, '')
+    .trim();
+
+  if (text !== '') {
+    return true;
+  }
+
+  return Array.from(doc.body.querySelectorAll<HTMLImageElement | HTMLIFrameElement | HTMLVideoElement | HTMLSourceElement>('img[src], iframe[src], video[src], source[src]'))
+    .some((element: HTMLImageElement | HTMLIFrameElement | HTMLVideoElement | HTMLSourceElement): boolean => element.getAttribute('src')?.trim() !== '');
+};
 
 const getFlagValue = (fieldName: string): string => {
   const checkedControl = form?.querySelector<HTMLInputElement>(`input[name="${fieldName}"]:checked`);
@@ -329,7 +457,7 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
     return sellPriceResult;
   }
 
-  if (Number(getValue('sell_price')) < Number(getValue('supply_price'))) {
+  if (registerSetting.block_under_supply_price === 'Y' && Number(getValue('sell_price')) < Number(getValue('supply_price'))) {
     return { message: '판매가는 공급가보다 작을 수 없습니다.', field: 'sell_price' };
   }
 
@@ -346,6 +474,9 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
     const compliancePriceResult = validateNumber('compliance_price', '준수가격', 1);
     if (compliancePriceResult) {
       return compliancePriceResult;
+    }
+    if (registerSetting.block_under_supply_price === 'Y' && Number(getValue('sell_price')) < Number(getValue('compliance_price'))) {
+      return { message: '가격준수 선택 시 판매가는 준수가격보다 작을 수 없습니다.', field: 'sell_price' };
     }
   }
 
@@ -376,12 +507,20 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
     return { message: '옵션을 사용하려면 옵션 항목명을 입력해 주세요.', field: 'option_title2' };
   }
 
-  if (getFlagValue('has_option') === 'Y' && !optionTbody?.querySelector('tr:not(#emptyOptionRow)')) {
+  const optionRowCount = optionTbody?.querySelectorAll('tr:not(#emptyOptionRow)').length ?? 0;
+  if (getFlagValue('has_option') === 'Y' && optionRowCount === 0) {
     return { message: '옵션 조합을 적용해 SKU를 생성해 주세요.', field: 'option_title2' };
   }
+  if (optionRowCount > maxOptionCount) {
+    return { message: `옵션은 최대 ${maxOptionCount}개까지 등록할 수 있습니다.`, field: 'addOptionBtn' };
+  }
 
-  if (getFlagValue('has_text_option') === 'Y' && !document.querySelector('#textOptionTbody tr:not(#emptyTextOptionRow)')) {
+  const textOptionRowCount = document.querySelectorAll('#textOptionTbody tr:not(#emptyTextOptionRow)').length;
+  if (getFlagValue('has_text_option') === 'Y' && textOptionRowCount === 0) {
     return { message: '텍스트 입력 옵션을 추가해 주세요.', field: 'addTextOptionBtn' };
+  }
+  if (textOptionRowCount > maxTextOptionCount) {
+    return { message: `텍스트 옵션은 최대 ${maxTextOptionCount}개까지 등록할 수 있습니다.`, field: 'addTextOptionBtn' };
   }
 
   const shippingType = getCheckedValue('shipping_type');
@@ -390,9 +529,14 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
   }
 
   if (shippingType !== 'FREE' && shippingType !== 'COD') {
-    const shippingFeeResult = validateNumber('shipping_fee', '기본 배송비');
+    const shippingFeeResult = validateNumber('shipping_fee', '노출배송비');
     if (shippingFeeResult) {
       return shippingFeeResult;
+    }
+
+    const actualShippingFeeResult = validateNumber('actual_shipping_fee', '실제배송비');
+    if (actualShippingFeeResult) {
+      return actualShippingFeeResult;
     }
   }
 
@@ -417,6 +561,10 @@ const validateGoodsRegisterForm = (): ValidationResult | null => {
 
   if (getValue('thumbnail_url') === '') {
     return { message: '대표 이미지를 업로드해 주세요.', field: 'imageUploadInput' };
+  }
+
+  if (!hasDetailContent(getValue('content'))) {
+    return { message: '상품 상세 설명을 입력해 주세요.', field: 'content' };
   }
 
   return null;
@@ -554,6 +702,38 @@ const createOptionSelect = (name: string, options: Array<{ value: string; label:
   return select;
 };
 
+const createOptionEmptyContent = (message: string, type: 'option' | 'text-option'): HTMLDivElement => {
+  const inner = document.createElement('div');
+  inner.className = 'admin-goods-register-option-empty-inner';
+
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.classList.add('admin-goods-register-option-empty-icon');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-linecap', 'round');
+  icon.setAttribute('stroke-linejoin', 'round');
+  icon.setAttribute('stroke-width', '1.5');
+  icon.setAttribute('aria-hidden', 'true');
+
+  const paths = type === 'text-option'
+    ? ['M5 4h14v16H5z', 'M8 8h8', 'M8 12h8', 'M8 16h5', 'M16 15l1 1 2-2']
+    : ['M4 5h7v6H4z', 'M13 5h7v6h-7z', 'M4 13h7v6H4z', 'M13 13h7v6h-7z', 'M7.5 11v2', 'M16.5 11v2'];
+
+  paths.forEach((pathData: string): void => {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathData);
+    icon.append(path);
+  });
+
+  const text = document.createElement('span');
+  text.textContent = message;
+
+  inner.append(icon, text);
+
+  return inner;
+};
+
 const renderEmptyOptionRow = (): void => {
   if (!optionTbody || optionTbody.querySelector('tr:not(#emptyOptionRow)')) {
     return;
@@ -565,7 +745,7 @@ const renderEmptyOptionRow = (): void => {
   const cell = document.createElement('td');
   cell.colSpan = 8;
   cell.className = 'admin-goods-register-empty-cell admin-goods-register-option-empty-cell';
-  cell.textContent = '옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.';
+  cell.append(createOptionEmptyContent('옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.', 'option'));
   row.append(cell);
   optionTbody.append(row);
 };
@@ -681,9 +861,14 @@ const applyOptionCombinations = async (): Promise<void> => {
     groups.push(secondItems);
   }
 
+  const combinations = buildOptionCombinations(groups);
+  if (combinations.length > maxOptionCount) {
+    await showMessage(`옵션은 최대 ${maxOptionCount}개까지 등록할 수 있습니다.`);
+    return;
+  }
+
   optionTbody.replaceChildren();
   optionIndex = 0;
-  const combinations = buildOptionCombinations(groups);
   combinations.forEach((combination: string[]): void => {
     appendOptionRow(combination[0] ?? '', combination[1] ?? '', depthNames.length === 1);
   });
@@ -710,6 +895,12 @@ const initOptionBuilder = (): void => {
   appendOptionButton?.addEventListener('click', async (): Promise<void> => {
     if (!optionTbody || optionTbody.querySelector('#emptyOptionRow')) {
       await showMessage('옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.');
+      return;
+    }
+
+    const optionRowCount = optionTbody.querySelectorAll('tr:not(#emptyOptionRow)').length;
+    if (optionRowCount >= maxOptionCount) {
+      await showMessage(`옵션은 최대 ${maxOptionCount}개까지 등록할 수 있습니다.`);
       return;
     }
 
@@ -1561,7 +1752,7 @@ const uploadGoodsImages = async (files: FileList | File[]): Promise<void> => {
   const availableImageSlots = Math.max(0, maxGoodsImageCount - uploadedGoodsImages.length);
 
   if (incomingFiles.length > availableImageSlots) {
-    await showMessage('이미지는 최대 10장까지 등록할 수 있습니다.');
+    await showMessage(`이미지는 최대 ${maxGoodsImageCount}장까지 등록할 수 있습니다.`);
   }
 
   const selectedFiles = incomingFiles.slice(0, availableImageSlots);
@@ -1632,15 +1823,21 @@ const renderEmptyTextOptionRow = (): void => {
   const cell = document.createElement('td');
   cell.colSpan = 5;
   cell.className = 'admin-goods-register-empty-cell admin-goods-register-option-empty-cell';
-  cell.textContent = '입력옵션을 추가해 주세요.';
+  cell.append(createOptionEmptyContent('입력옵션을 추가해 주세요.', 'text-option'));
   row.append(cell);
   tbody.replaceChildren(row);
 };
 
 let textOptionIndex = 0;
-const appendTextOptionRow = (): void => {
+const appendTextOptionRow = async (): Promise<void> => {
   const tbody = document.querySelector<HTMLTableSectionElement>('#textOptionTbody');
   if (!tbody) {
+    return;
+  }
+
+  const textOptionRowCount = tbody.querySelectorAll('tr:not(#emptyTextOptionRow)').length;
+  if (textOptionRowCount >= maxTextOptionCount) {
+    await showMessage(`텍스트 옵션은 최대 ${maxTextOptionCount}개까지 등록할 수 있습니다.`);
     return;
   }
   tbody.querySelector('#emptyTextOptionRow')?.remove();
@@ -1679,7 +1876,9 @@ const appendTextOptionRow = (): void => {
 };
 
 const initTextOptions = (): void => {
-  document.querySelector<HTMLButtonElement>('#addTextOptionBtn')?.addEventListener('click', appendTextOptionRow);
+  document.querySelector<HTMLButtonElement>('#addTextOptionBtn')?.addEventListener('click', (): void => {
+    void appendTextOptionRow();
+  });
   renderEmptyTextOptionRow();
 };
 

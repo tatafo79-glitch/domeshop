@@ -28,12 +28,25 @@ class ServiceResolver
    */
   public function resolve(string $controllerClass): ?object
   {
-    // Controllers and services share namespace shape, so route actions can auto-resolve their service.
-    $serviceClass = str_replace(
-      ['App\\Controllers\\', '\\Page', '\\Get', '\\Load', '\\Post', '\\Put', '\\Delete'],
-      ['App\\Services\\', '\\PageService', '\\GetService', '\\LoadService', '\\PostService', '\\PutService', '\\DeleteService'],
-      $controllerClass
-    );
+    $serviceClass = str_replace('App\\Controllers\\', 'App\\Services\\', $controllerClass);
+    $parts = explode('\\', $serviceClass);
+    $action = array_pop($parts);
+    $serviceActions = [
+      'Page' => 'PageService',
+      'Get' => 'GetService',
+      'Load' => 'LoadService',
+      'Post' => 'PostService',
+      'Put' => 'PutService',
+      'Delete' => 'DeleteService',
+    ];
+
+    if (!isset($serviceActions[$action])) {
+      return null;
+    }
+
+    // 마지막 액션 클래스명만 Service명으로 바꿔 Delete\Post 같은 중첩 경로를 보존한다.
+    $parts[] = $serviceActions[$action];
+    $serviceClass = implode('\\', $parts);
 
     if (!class_exists($serviceClass)) {
       return null;

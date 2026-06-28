@@ -3,6 +3,11 @@
 {% block pageTitle %}상품 등록{% endblock %}
 
 {% block contents %}
+{% set register_config = register_setting|default({}) %}
+{% set max_image_count = register_config.max_image_count|default(10) %}
+{% set max_option_count = register_config.max_option_count|default(100) %}
+{% set max_text_option_count = register_config.max_text_option_count|default(20) %}
+{% set extra_image_count = max_image_count > 1 ? max_image_count - 1 : 0 %}
 <section class="admin-goods-register">
   <div class="admin-page-desc-wrap">
     <p class="admin-page-desc">신규 상품의 카테고리, 기본 정보, 가격, 이미지, 옵션, 배송 정책과 상세 설명을 등록합니다.</p>
@@ -58,6 +63,7 @@
       <script type="application/json" id="goodsCategoryData">{{ categories|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
       <script type="application/json" id="goodsVendorData">{{ vendors|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
       <script type="application/json" id="goodsOriginData">{{ origins|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
+      <script type="application/json" id="goodsRegisterSettingData">{{ register_config|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
     </section>
     <section class="admin-card admin-goods-register-section">
       <div class="admin-card-header">
@@ -187,7 +193,7 @@
           <label class="admin-form-label" for="sell_price">판매가<span class="admin-required-mark" aria-hidden="true">*</span></label>
           <div class="admin-form-content admin-goods-register-price-control">
             <span class="admin-goods-register-unit-input"><input id="sell_price" name="sell_price" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="0"><span class="admin-goods-register-unit">원</span></span>
-            <button type="button" id="openMarginCalcBtn" class="admin-goods-register-margin-button" data-admin-margin-calculator data-margin-source="goods-form" data-margin-supply-target="#supply_price" data-margin-sell-target="#sell_price" data-margin-shipping-target="#shipping_fee" data-margin-shipping-row="[data-shipping-fee-row]"><svg class="admin-goods-register-margin-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span>마진 계산기</span></button>
+            <button type="button" id="openMarginCalcBtn" class="admin-goods-register-margin-button" data-admin-margin-calculator data-margin-source="goods-form" data-margin-supply-target="#supply_price" data-margin-sell-target="#sell_price" data-margin-shipping-target="#shipping_fee" data-margin-actual-shipping-target="#actual_shipping_fee" data-margin-shipping-row="[data-shipping-fee-row]"><svg class="admin-goods-register-margin-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg><span>마진 계산기</span></button>
             <label class="admin-goods-register-inline-check"><input type="hidden" name="sell_price_fixed" value="N"><input type="checkbox" name="sell_price_fixed" value="Y"><span>판매가 고정</span></label>
           </div>
         </div>
@@ -248,17 +254,19 @@
 
     <section class="admin-card admin-goods-register-section">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">이미지 정보</h3>
+        <h3 class="admin-card-title">이미지 정보<span class="admin-required-mark" aria-hidden="true">*</span></h3>
       </div>
       <div class="admin-goods-register-image-body">
         <div id="imageHiddenFields" class="admin-goods-register-hidden-fields">
           <input type="hidden" name="thumbnail_url" value="">
-          {% for index in 1..9 %}<input type="hidden" name="goods_images[]" value="">{% endfor %}
+          {% if extra_image_count > 0 %}
+            {% for index in 1..extra_image_count %}<input type="hidden" name="goods_images[]" value="">{% endfor %}
+          {% endif %}
         </div>
         <label class="admin-goods-register-image-dropzone" for="imageUploadInput">
           <svg class="admin-goods-register-image-dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
           <strong>이미지를 선택하거나 끌어오세요.</strong>
-          <span>최대 10장 등록 가능, 첫 번째 이미지가 대표 썸네일로 사용됩니다.</span>
+          <span>최대 {{ max_image_count }}장 등록 가능, 첫 번째 이미지가 대표 썸네일로 사용됩니다.</span>
         </label>
         <input id="imageUploadInput" type="file" accept="image/*" multiple class="admin-goods-register-image-input">
         <div id="imagePreviewContainer" class="admin-goods-register-image-preview-grid" aria-live="polite"></div>
@@ -281,6 +289,7 @@
         <div class="admin-goods-register-option-actions">
           <button type="button" id="addOptionBtn" class="admin-btn-secondary admin-goods-register-option-action-button">적용</button>
         </div>
+        <p class="admin-goods-register-help">※ 옵션은 최대 {{ max_option_count }}개까지 등록할 수 있습니다.</p>
         <div class="admin-goods-register-table-wrap">
           <table class="admin-goods-register-table admin-goods-register-option-table">
             <thead>
@@ -296,7 +305,21 @@
               </tr>
             </thead>
             <tbody id="optionTbody">
-              <tr id="emptyOptionRow"><td colspan="8" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.</td></tr>
+              <tr id="emptyOptionRow">
+                <td colspan="8" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">
+                  <div class="admin-goods-register-option-empty-inner">
+                    <svg class="admin-goods-register-option-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M4 5h7v6H4z"></path>
+                      <path d="M13 5h7v6h-7z"></path>
+                      <path d="M4 13h7v6H4z"></path>
+                      <path d="M13 13h7v6h-7z"></path>
+                      <path d="M7.5 11v2"></path>
+                      <path d="M16.5 11v2"></path>
+                    </svg>
+                    <span>옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.</span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -317,6 +340,7 @@
         </div>
       </div>
       <div id="goodsTextOptionPanel" class="admin-goods-register-option-body is-hidden" data-text-option-row hidden aria-hidden="true">
+        <p class="admin-goods-register-help">※ 텍스트 옵션은 최대 {{ max_text_option_count }}개까지 등록할 수 있습니다.</p>
         <div class="admin-goods-register-table-wrap">
           <table class="admin-goods-register-table admin-goods-register-text-option-table">
             <thead>
@@ -329,7 +353,20 @@
               </tr>
             </thead>
             <tbody id="textOptionTbody">
-              <tr id="emptyTextOptionRow"><td colspan="5" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">입력옵션을 추가해 주세요.</td></tr>
+              <tr id="emptyTextOptionRow">
+                <td colspan="5" class="admin-goods-register-empty-cell admin-goods-register-option-empty-cell">
+                  <div class="admin-goods-register-option-empty-inner">
+                    <svg class="admin-goods-register-option-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M5 4h14v16H5z"></path>
+                      <path d="M8 8h8"></path>
+                      <path d="M8 12h8"></path>
+                      <path d="M8 16h5"></path>
+                      <path d="M16 15l1 1 2-2"></path>
+                    </svg>
+                    <span>입력옵션을 추가해 주세요.</span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -350,23 +387,30 @@
           <span class="admin-form-label">배송 정책<span class="admin-required-mark" aria-hidden="true">*</span></span>
           <div class="admin-form-content admin-goods-register-control">
             <div class="admin-goods-register-radio-group is-four" role="radiogroup" aria-label="배송비 정책">
-              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="PAID" checked><span>유료 배송</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="QUANTITY"><span>수량별</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="FREE"><span>무료 배송</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="COD"><span>착불 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="PAID"{% if register_config.default_shipping_type|default('PAID') == 'PAID' %} checked{% endif %}><span>유료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="QUANTITY"{% if register_config.default_shipping_type|default('PAID') == 'QUANTITY' %} checked{% endif %}><span>수량별</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="FREE"{% if register_config.default_shipping_type|default('PAID') == 'FREE' %} checked{% endif %}><span>무료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="shipping_type" value="COD"{% if register_config.default_shipping_type|default('PAID') == 'COD' %} checked{% endif %}><span>착불 배송</span></label>
             </div>
           </div>
         </div>
         <div class="admin-form-row" data-shipping-fee-row>
-          <label class="admin-form-label" for="shipping_fee">기본 배송비<span class="admin-required-mark" aria-hidden="true">*</span></label>
-          <div class="admin-form-content admin-goods-register-price-control">
-            <span class="admin-goods-register-unit-input"><input id="shipping_fee" name="shipping_fee" type="text" inputmode="numeric" class="admin-input" value="2500"><span class="admin-goods-register-unit">원</span></span>
+          <label class="admin-form-label" for="shipping_fee">기본 배송비</label>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <label class="admin-goods-register-shipping-fee-field" for="shipping_fee">
+              <span>노출배송비<span class="admin-required-mark" aria-hidden="true">*</span></span>
+              <span class="admin-goods-register-unit-input"><input id="shipping_fee" name="shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.shipping_fee|default(2500) }}" aria-label="노출배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="actual_shipping_fee">
+              <span>실제배송비</span>
+              <span class="admin-goods-register-unit-input"><input id="actual_shipping_fee" name="actual_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.actual_shipping_fee|default(register_config.shipping_fee|default(2500)) }}" aria-label="실제배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
           </div>
         </div>
-        <div class="admin-form-row" data-quantity-shipping-row hidden>
+        <div class="admin-form-row" data-quantity-shipping-row{% if register_config.default_shipping_type|default('PAID') != 'QUANTITY' %} hidden{% endif %}>
           <label class="admin-form-label" for="shipping_qty_limit">합포장 기준 수량<span class="admin-required-mark" aria-hidden="true">*</span></label>
           <div class="admin-form-content admin-goods-register-price-control is-wide">
-            <span class="admin-goods-register-unit-input is-quantity"><input id="shipping_qty_limit" name="shipping_qty_limit" type="text" inputmode="numeric" class="admin-input" value="1"><span class="admin-goods-register-unit">개</span></span>
+            <span class="admin-goods-register-unit-input is-quantity"><input id="shipping_qty_limit" name="shipping_qty_limit" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.shipping_qty_limit|default(1) }}"><span class="admin-goods-register-unit">개</span></span>
             <span class="admin-goods-register-help">마다 배송비 1회 부과</span>
           </div>
         </div>
@@ -376,11 +420,11 @@
             <input type="hidden" name="has_extra_shipping" value="Y">
             <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_jeju">
               <span>제주도(편도)</span>
-              <span class="admin-goods-register-unit-input"><input id="extra_shipping_jeju" name="extra_shipping_jeju" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_jeju" name="extra_shipping_jeju" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.extra_shipping_jeju|default(0) }}" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
             </label>
             <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_island">
               <span>도서산간(편도)</span>
-              <span class="admin-goods-register-unit-input"><input id="extra_shipping_island" name="extra_shipping_island" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_island" name="extra_shipping_island" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.extra_shipping_island|default(0) }}" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
             </label>
 
             <p class="admin-goods-register-help">※ 최종 산출된 박스 수량만큼 곱셈 부과</p>
@@ -391,11 +435,11 @@
           <div class="admin-form-content admin-goods-register-shipping-fee-group">
             <label class="admin-goods-register-shipping-fee-field" for="return_shipping_fee">
               <span>반품 배송비 (편도)</span>
-              <span class="admin-goods-register-unit-input"><input id="return_shipping_fee" name="return_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="2500" aria-label="반품 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+              <span class="admin-goods-register-unit-input"><input id="return_shipping_fee" name="return_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.return_shipping_fee|default(2500) }}" aria-label="반품 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
             </label>
             <label class="admin-goods-register-shipping-fee-field" for="exchange_shipping_fee">
               <span>교환 배송비 (왕복)</span>
-              <span class="admin-goods-register-unit-input"><input id="exchange_shipping_fee" name="exchange_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="5000" aria-label="교환 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+              <span class="admin-goods-register-unit-input"><input id="exchange_shipping_fee" name="exchange_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ register_config.exchange_shipping_fee|default(5000) }}" aria-label="교환 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
             </label>
           </div>
         </div>
@@ -404,7 +448,7 @@
 
     <section class="admin-card admin-goods-register-section">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">상품 상세 설명</h3>
+        <h3 class="admin-card-title">상품 상세 설명 <span class="admin-required-mark" aria-hidden="true">*</span></h3>
       </div>
       <div class="admin-goods-register-editor-wrap">
         <textarea id="content" name="content" class="admin-input admin-goods-register-editor" rows="12" placeholder="상품 상세 설명을 입력하세요."></textarea>

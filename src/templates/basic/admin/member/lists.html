@@ -160,7 +160,15 @@
           </tr>
           {% else %}
           <tr>
-            <td class="admin-table-td admin-member-lists-empty" colspan="12">검색 결과가 없습니다.</td>
+            <td class="admin-table-td admin-member-lists-empty" colspan="12">
+              <svg class="admin-member-lists-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21a8 8 0 0114 0"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17l4 4"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 15a4 4 0 11-2.2-3.57"></path>
+              </svg>
+              <span>검색 결과가 없습니다.</span>
+            </td>
           </tr>
           {% endfor %}
         </tbody>

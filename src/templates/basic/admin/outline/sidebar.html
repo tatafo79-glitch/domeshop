@@ -98,6 +98,7 @@
         </button>
         <div class="admin-outline-nav-nested-submenu">
           <a href="/{{ setting.site.admin_directory }}/setting/goods/register" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/register') ? 'is-active' : ''">등록설정</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/platform-fee') ? 'is-active' : ''">플랫폼 수수료 설정</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/prohibited-keyword" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/prohibited-keyword') ? 'is-active' : ''">금지키워드</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/origin" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/origin') ? 'is-active' : ''">원산지</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/notice" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/notice') ? 'is-active' : ''">상품정보고시</a>

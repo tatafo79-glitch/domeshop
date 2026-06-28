@@ -24,6 +24,22 @@ class UploadRepository extends BaseRepository
   }
 
   /**
+   * 업로드 파일을 분류와 경로 기준으로 사용 중 상태로 표시합니다.
+   *
+   * @param string $filePath 파일 경로
+   * @param string $category 업로드 분류
+   *
+   * @return bool
+   */
+  public function markAsUsedByPathAndCategory(string $filePath, string $category): bool
+  {
+    return $this->db->execute(
+      'UPDATE uploaded_files SET is_used = ? WHERE file_path = ? AND category = ?',
+      [1, $filePath, $category]
+    );
+  }
+
+  /**
    * 업로드 파일을 미사용 상태로 표시합니다.
    *
    * @param string $filePath 파일 경로

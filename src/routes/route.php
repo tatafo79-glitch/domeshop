@@ -36,6 +36,7 @@ return function (App $app): void {
     (require __DIR__ . '/admin/member.php')($group);
     (require __DIR__ . '/admin/goods.php')($group);
     (require __DIR__ . '/admin/order.php')($group);
+    (require __DIR__ . '/admin/setting.php')($group);
     (require __DIR__ . '/common/upload.php')($group);
   })
     ->add('csrf')

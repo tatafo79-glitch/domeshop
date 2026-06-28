@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin\Goods\Register;
 
+use App\Services\Admin\Setting\Goods\Register\GoodsRegisterSetting;
 use App\Services\BaseService;
 
 class PageService extends BaseService
@@ -21,6 +22,7 @@ class PageService extends BaseService
       'categories' => $this->repo?->getActiveCategories() ?? [],
       'vendors' => $this->repo?->getApprovedVendors() ?? [],
       'origins' => $this->repo?->getGoodsOrigins() ?? [],
+      'register_setting' => $this->container->get(GoodsRegisterSetting::class)->getSettings(),
       'previous_url' => $this->adminUrl('/goods/lists'),
     ];
   }
@@ -40,6 +42,3 @@ class PageService extends BaseService
     return '/' . trim($adminDir, '/') . $path;
   }
 }
-
-
-

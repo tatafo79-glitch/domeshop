@@ -1,0 +1,171 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}상품 등록설정{% endblock %}
+
+{% block contents %}
+{% set config = register_setting %}
+<section class="admin-setting-goods-register">
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">상품 등록 화면에서 반복 사용하는 판매가 산정 방식, 등록 제한, 배송 기본값을 관리합니다.</p>
+  </div>
+
+  <form id="goodsRegisterSettingForm" class="admin-setting-goods-register-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/register" novalidate>
+    <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+    <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+
+    <section class="admin-card admin-setting-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">판매가 산정설정</h3>
+      </div>
+      <div class="admin-setting-goods-register-body">
+        <div class="admin-form-row admin-setting-goods-register-two-col-row">
+          <div class="admin-setting-goods-register-half-row">
+            <span class="admin-form-label">기본 산정방식</span>
+            <div class="admin-form-content admin-setting-goods-register-control">
+              <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="기본 판매가 산정방식">
+                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="SUPPLY_PRICE"{% if config.pricing_method == 'SUPPLY_PRICE' %} checked{% endif %}><span>공급가</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="MARGIN_RATE"{% if config.pricing_method == 'MARGIN_RATE' %} checked{% endif %}><span>마진율</span></label>
+              </div>
+              <span class="admin-setting-goods-register-inline-text">대비 판매가 산정</span>
+            </div>
+          </div>
+          <div class="admin-setting-goods-register-half-row">
+            <label class="admin-form-label" for="margin_rate">기본 마진율</label>
+            <div class="admin-form-content admin-setting-goods-register-price-control">
+              <span class="admin-goods-register-unit-input"><input id="margin_rate" name="margin_rate" type="text" inputmode="numeric" class="admin-input" value="{{ config.margin_rate }}"><span class="admin-goods-register-unit">%</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">판매가 산정식</span>
+          <div class="admin-form-content admin-setting-goods-register-formula-list">
+            <p>※ 공급가 대비 판매가 산정 - 판매가(12,000) = 공급가(10,000) * 1.2(20%)</p>
+            <p>※ 마진율 대비 판매가 산정 - 판매가(12,500) = 공급가(10,000) / 1-0.2 (20%)</p>
+          </div>
+        </div>
+        <div class="admin-form-row admin-setting-goods-register-two-col-row">
+          <div class="admin-setting-goods-register-half-row">
+            <label class="admin-form-label" for="rounding_unit">반올림 단위</label>
+            <div class="admin-form-content admin-setting-goods-register-control is-narrow">
+              <select id="rounding_unit" name="rounding_unit" class="admin-input">
+                <option value="1"{% if config.rounding_unit == '1' %} selected{% endif %}>1원</option>
+                <option value="10"{% if config.rounding_unit == '10' %} selected{% endif %}>10원</option>
+                <option value="100"{% if config.rounding_unit == '100' %} selected{% endif %}>100원</option>
+                <option value="1000"{% if config.rounding_unit == '1000' %} selected{% endif %}>1,000원</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-setting-goods-register-half-row">
+            <span class="admin-form-label">처리 방식</span>
+            <div class="admin-form-content admin-setting-goods-register-control">
+              <div class="admin-goods-register-radio-group is-three" role="radiogroup" aria-label="반올림 처리 방식">
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="CEIL"{% if config.rounding_type == 'CEIL' %} checked{% endif %}><span>올림</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="ROUND"{% if config.rounding_type == 'ROUND' %} checked{% endif %}><span>반올림</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="FLOOR"{% if config.rounding_type == 'FLOOR' %} checked{% endif %}><span>내림</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">가격 보호</span>
+          <div class="admin-form-content admin-setting-goods-register-checks">
+            <label class="admin-goods-register-check"><input type="hidden" name="block_under_supply_price" value="N"><input type="checkbox" name="block_under_supply_price" value="Y"{% if config.block_under_supply_price == 'Y' %} checked{% endif %}><span>판매가가 공급가보다 낮거나 가격준수일 경우 준수가격보다 낮으면 차단</span></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-setting-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">등록 제한</h3>
+      </div>
+      <div class="admin-setting-goods-register-body">
+        <div class="admin-setting-goods-register-three-col-row">
+          <label class="admin-setting-goods-register-field" for="max_image_count">
+            <span>이미지 등록 수</span>
+            <span class="admin-goods-register-unit-input"><input id="max_image_count" name="max_image_count" type="text" inputmode="numeric" class="admin-input" value="{{ config.max_image_count }}"><span class="admin-goods-register-unit">개</span></span>
+          </label>
+          <label class="admin-setting-goods-register-field" for="max_option_count">
+            <span>옵션 등록 수</span>
+            <span class="admin-goods-register-unit-input"><input id="max_option_count" name="max_option_count" type="text" inputmode="numeric" class="admin-input" value="{{ config.max_option_count }}"><span class="admin-goods-register-unit">개</span></span>
+          </label>
+          <label class="admin-setting-goods-register-field" for="max_text_option_count">
+            <span>텍스트 옵션 등록 수</span>
+            <span class="admin-goods-register-unit-input"><input id="max_text_option_count" name="max_text_option_count" type="text" inputmode="numeric" class="admin-input" value="{{ config.max_text_option_count }}"><span class="admin-goods-register-unit">개</span></span>
+          </label>
+        </div>
+      </div>
+    </section>
+    <section class="admin-card admin-setting-goods-register-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">배송 기본값</h3>
+      </div>
+      <div class="admin-goods-register-form-body">
+        <div class="admin-form-row">
+          <span class="admin-form-label">배송 정책</span>
+          <div class="admin-form-content admin-goods-register-control">
+            <div class="admin-goods-register-radio-group is-four" role="radiogroup" aria-label="기본 배송 정책">
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="PAID"{% if config.default_shipping_type == 'PAID' %} checked{% endif %}><span>유료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="QUANTITY"{% if config.default_shipping_type == 'QUANTITY' %} checked{% endif %}><span>수량별</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="FREE"{% if config.default_shipping_type == 'FREE' %} checked{% endif %}><span>무료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="COD"{% if config.default_shipping_type == 'COD' %} checked{% endif %}><span>착불 배송</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="shipping_fee">기본 배송비</label>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <label class="admin-goods-register-shipping-fee-field" for="shipping_fee">
+              <span>노출배송비</span>
+              <span class="admin-goods-register-unit-input"><input id="shipping_fee" name="shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ config.shipping_fee }}" aria-label="노출배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="actual_shipping_fee">
+              <span>실제배송비</span>
+              <span class="admin-goods-register-unit-input"><input id="actual_shipping_fee" name="actual_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ config.actual_shipping_fee }}" aria-label="실제배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+          </div>
+        </div>
+        <div class="admin-form-row" data-setting-quantity-shipping-row{% if config.default_shipping_type != 'QUANTITY' %} hidden{% endif %}>
+          <label class="admin-form-label" for="shipping_qty_limit">합포장 기준 수량</label>
+          <div class="admin-form-content admin-goods-register-price-control is-wide">
+            <span class="admin-goods-register-unit-input is-quantity"><input id="shipping_qty_limit" name="shipping_qty_limit" type="text" inputmode="numeric" class="admin-input" value="{{ config.shipping_qty_limit }}"><span class="admin-goods-register-unit">개</span></span>
+            <span class="admin-goods-register-help">마다 배송비 1회 부과</span>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">추가 배송비 설정</span>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <input type="hidden" name="has_extra_shipping" value="Y">
+            <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_jeju">
+              <span>제주도(편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_jeju" name="extra_shipping_jeju" type="text" inputmode="numeric" class="admin-input" value="{{ config.extra_shipping_jeju }}" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="extra_shipping_island">
+              <span>도서산간(편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="extra_shipping_island" name="extra_shipping_island" type="text" inputmode="numeric" class="admin-input" value="{{ config.extra_shipping_island }}" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <p class="admin-goods-register-help">※ 최종 산출된 박스 수량만큼 곱셈 부과</p>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="return_shipping_fee">반품/교환 배송비</label>
+          <div class="admin-form-content admin-goods-register-shipping-fee-group">
+            <label class="admin-goods-register-shipping-fee-field" for="return_shipping_fee">
+              <span>반품 배송비 (편도)</span>
+              <span class="admin-goods-register-unit-input"><input id="return_shipping_fee" name="return_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ config.return_shipping_fee }}" aria-label="반품 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+            <label class="admin-goods-register-shipping-fee-field" for="exchange_shipping_fee">
+              <span>교환 배송비 (왕복)</span>
+              <span class="admin-goods-register-unit-input"><input id="exchange_shipping_fee" name="exchange_shipping_fee" type="text" inputmode="numeric" class="admin-input" value="{{ config.exchange_shipping_fee }}" aria-label="교환 배송비" placeholder="숫자만 입력"><span class="admin-goods-register-unit">원</span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="admin-setting-goods-register-bottom-actions">
+      <button type="button" class="admin-btn-secondary">초기화</button>
+      <button type="submit" class="admin-btn-primary">저장</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

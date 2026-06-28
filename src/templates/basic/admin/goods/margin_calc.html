@@ -8,7 +8,7 @@
   <link href="/dist/{{ setting.skin.name }}/css/admin.css?v=70" rel="stylesheet">
   <script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/margin_calc.js?v=2"></script>
 </head>
-<body class="admin-frame-body" data-default-market-fee="0" data-default-shipping-fee="0">
+<body class="admin-frame-body" data-default-market-fee="0" data-default-shipping-fee="0" data-default-platform-code="{{ default_platform_code }}">
   <main class="admin-goods-margin-calc-frame" id="mcContentWrapper" data-margin-calc>
     <div class="admin-goods-margin-calc-head">
       <p class="admin-page-desc">판매가격, 공급가, 수수료 등을 입력하여 마진율과 판매이익을 계산합니다.</p>
@@ -65,7 +65,7 @@
           <label class="admin-goods-margin-calc-row" for="mcSentShipping">
             <span>실제 배송비</span>
             <span class="admin-goods-margin-calc-unit-input">
-              <input id="mcSentShipping" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.shipping_fee|number_format }}" data-margin-input="sent-shipping">
+              <input id="mcSentShipping" type="text" inputmode="numeric" class="admin-input" placeholder="0" value="{{ calculator.actual_shipping_fee|number_format }}" data-margin-input="sent-shipping">
               <em>원</em>
             </span>
           </label>
@@ -76,9 +76,10 @@
         <div class="admin-card-header">
           <h2 class="admin-card-title">플랫폼</h2>
           <select id="mcPlatformSelect" class="admin-input admin-goods-margin-calc-platform" aria-label="플랫폼 선택">
-            <option value="" data-market="0" data-shipping="0">플랫폼 선택</option>
-            <option value="smartstore" data-market="5.63" data-shipping="3.3">스마트스토어</option>
-            <option value="coupang" data-market="10.8" data-shipping="3.3">쿠팡</option>
+            <option value="" data-market="0" data-shipping="0" data-instant="0" data-add="0" data-flat="0">플랫폼 선택</option>
+            {% for platform in platform_fees %}
+              <option value="{{ platform.platform_code }}" data-market="{{ platform.platform_fee_rate }}" data-shipping="{{ platform.shipping_fee_rate }}" data-instant="{{ platform.instant_discount_rate }}" data-add="{{ platform.additional_discount_rate }}" data-flat="{{ platform.additional_fixed_discount }}"{% if platform.platform_code == default_platform_code %} selected{% endif %}>{{ platform.platform_name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="admin-goods-margin-calc-fields">

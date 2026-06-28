@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin\Goods\Register;
 
 use App\Repositories\Common\UploadRepository;
+use App\Services\Admin\Setting\Goods\Register\GoodsRegisterSetting;
 use App\Services\BaseService;
 use PDOException;
 use Throwable;
@@ -19,6 +20,10 @@ class PostService extends BaseService
   private const PRICE_POLICIES = ['FREE', 'COMPLY'];
   private const SHIPPING_TYPES = ['PAID', 'QUANTITY', 'FREE', 'COD'];
   private const SOLDOUT_VALUES = ['0', '1'];
+  private const MAX_OPTION_VALUE_LENGTH = 100;
+  private const MAX_TEXT_OPTION_TITLE_LENGTH = 100;
+  private const MAX_TEXT_OPTION_INPUT_LENGTH = 1000;
+  private const MAX_IMAGE_PATH_LENGTH = 255;
 
   /**
    * 상품 등록 데이터를 검증하고 저장합니다.
@@ -90,6 +95,8 @@ class PostService extends BaseService
    */
   private function normalize(array $data): array
   {
+    $settings = $this->container->get(GoodsRegisterSetting::class)->getSettings();
+
     $categoryIdResult = $this->normalizeRequiredInt($data, 'category_id', '카테고리를 선택해 주세요.', 'categorySearchInput', 1);
     if (($categoryIdResult['success'] ?? false) !== true) {
       return $categoryIdResult;
@@ -165,13 +172,19 @@ class PostService extends BaseService
     if (($sellPriceResult['success'] ?? false) !== true) {
       return $sellPriceResult;
     }
-    if ((int) $sellPriceResult['value'] < (int) $supplyPriceResult['value']) {
-      return $this->fail('판매가는 공급가보다 작을 수 없습니다.', 'sell_price');
-    }
 
     $sellPriceFixedResult = $this->normalizeFlag($data, 'sell_price_fixed', '판매가 고정 여부를 올바르게 선택해 주세요.', 'sell_price_fixed');
     if (($sellPriceFixedResult['success'] ?? false) !== true) {
       return $sellPriceFixedResult;
+    }
+
+    $supplyPrice = (int) $supplyPriceResult['value'];
+    $sellPrice = (int) $sellPriceResult['value'];
+    if ($sellPriceFixedResult['value'] !== 'Y') {
+      $sellPrice = $this->calculateDefaultSellPrice($supplyPrice, $settings);
+    }
+    if ($settings['block_under_supply_price'] === 'Y' && $sellPrice < $supplyPrice) {
+      return $this->fail('판매가는 공급가보다 작을 수 없습니다.', 'sell_price');
     }
 
     $pricePolicyResult = $this->normalizeEnum($data, 'price_policy', self::PRICE_POLICIES, '가격 정책을 올바르게 선택해 주세요.', 'price_policy');
@@ -189,6 +202,9 @@ class PostService extends BaseService
         return $this->fail('가격준수 선택 시 준수가격은 1 이상 입력해 주세요.', 'compliance_price');
       }
       $compliancePrice = (int) $compliancePriceResult['value'];
+      if ($settings['block_under_supply_price'] === 'Y' && $sellPrice < $compliancePrice) {
+        return $this->fail('가격준수 선택 시 판매가는 준수가격보다 작을 수 없습니다.', 'sell_price');
+      }
     }
 
     $stockResult = $this->normalizeRequiredInt($data, 'stock', '재고 수량은 0 이상의 숫자로 입력해 주세요.', 'stock');
@@ -226,12 +242,12 @@ class PostService extends BaseService
       return $hasTextOptionResult;
     }
 
-    $optionsResult = $this->normalizeOptions($data, $hasOptionResult['value'] === 'Y');
+    $optionsResult = $this->normalizeOptions($data, $hasOptionResult['value'] === 'Y', (int) $settings['max_option_count']);
     if (($optionsResult['success'] ?? false) !== true) {
       return $optionsResult;
     }
 
-    $textOptionsResult = $this->normalizeTextOptions($data, $hasTextOptionResult['value'] === 'Y');
+    $textOptionsResult = $this->normalizeTextOptions($data, $hasTextOptionResult['value'] === 'Y', (int) $settings['max_text_option_count']);
     if (($textOptionsResult['success'] ?? false) !== true) {
       return $textOptionsResult;
     }
@@ -241,8 +257,16 @@ class PostService extends BaseService
       return $shippingResult;
     }
 
-    $images = $this->normalizeImages($data);
+    $imagesResult = $this->normalizeImages($data, (int) $settings['max_image_count']);
+    if (($imagesResult['success'] ?? false) !== true) {
+      return $imagesResult;
+    }
+    $images = $imagesResult['images'];
     $content = (string) ($data['content'] ?? '');
+    if ($this->hasDetailContent($content) !== true) {
+      return $this->fail('상품 상세 설명을 입력해 주세요.', 'content');
+    }
+
     $goodsData = array_merge([
       'vendor_code' => $vendorCode,
       'vendor_goods_code' => $vendorGoodsCode === '' ? null : $vendorGoodsCode,
@@ -259,8 +283,8 @@ class PostService extends BaseService
       'search_keywords' => $keywordsResult['value'],
       'search_text' => trim($name . ' ' . (string) $keywordsResult['value']),
       'tax_type' => $taxTypeResult['value'],
-      'supply_price' => (int) $supplyPriceResult['value'],
-      'sell_price' => (int) $sellPriceResult['value'],
+      'supply_price' => $supplyPrice,
+      'sell_price' => $sellPrice,
       'sell_price_fixed' => $sellPriceFixedResult['value'],
       'price_policy' => $pricePolicyResult['value'],
       'compliance_price' => $compliancePrice,
@@ -288,6 +312,50 @@ class PostService extends BaseService
     ];
   }
 
+  /**
+   * 설정된 판매가 산정식으로 기본 판매가를 계산합니다.
+   *
+   * @param int $supplyPrice 공급가
+   * @param array $settings 상품 등록설정
+   *
+   * @return int
+   */
+  private function calculateDefaultSellPrice(int $supplyPrice, array $settings): int
+  {
+    $marginRate = max(0, (int) ($settings['margin_rate'] ?? 0)) / 100;
+    if (($settings['pricing_method'] ?? 'SUPPLY_PRICE') === 'MARGIN_RATE') {
+      $rawPrice = $marginRate >= 1 ? $supplyPrice : $supplyPrice / (1 - $marginRate);
+    } else {
+      $rawPrice = $supplyPrice * (1 + $marginRate);
+    }
+
+    return max(0, $this->roundCalculatedPrice($rawPrice, $settings));
+  }
+
+  /**
+   * 설정된 반올림 단위와 처리 방식으로 금액을 보정합니다.
+   *
+   * @param float $price 원본 금액
+   * @param array $settings 상품 등록설정
+   *
+   * @return int
+   */
+  private function roundCalculatedPrice(float $price, array $settings): int
+  {
+    $unit = max(1, (int) ($settings['rounding_unit'] ?? 1));
+    $scaledPrice = $price / $unit;
+    $roundingType = (string) ($settings['rounding_type'] ?? 'ROUND');
+
+    if ($roundingType === 'CEIL') {
+      return (int) (ceil($scaledPrice) * $unit);
+    }
+
+    if ($roundingType === 'FLOOR') {
+      return (int) (floor($scaledPrice) * $unit);
+    }
+
+    return (int) (round($scaledPrice) * $unit);
+  }
   /**
    * 필수 정수값을 검증합니다.
    *
@@ -588,6 +656,26 @@ class PostService extends BaseService
   }
 
   /**
+   * 상세 설명에 텍스트 또는 이미지/미디어 내용이 있는지 확인합니다.
+   *
+   * @param string $content 상품 상세 설명 HTML
+   *
+   * @return bool
+   */
+  private function hasDetailContent(string $content): bool
+  {
+    $text = html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = str_replace("\xc2\xa0", ' ', $text);
+    $normalizedText = preg_replace('/\s+/u', '', $text);
+
+    if (is_string($normalizedText) && $normalizedText !== '') {
+      return true;
+    }
+
+    return preg_match('/<(img|iframe|video|source)\b[^>]*(src|data-src)=["\'][^"\']+["\']/i', $content) === 1;
+  }
+
+  /**
    * 배송비 데이터를 검증합니다.
    *
    * @param array $data 입력 데이터
@@ -602,7 +690,8 @@ class PostService extends BaseService
     }
 
     $fields = [
-      'shipping_fee' => '기본 배송비는 0 이상의 숫자로 입력해 주세요.',
+      'shipping_fee' => '노출배송비는 0 이상의 숫자로 입력해 주세요.',
+      'actual_shipping_fee' => '실제배송비는 0 이상의 숫자로 입력해 주세요.',
       'extra_shipping_jeju' => '제주 추가 배송비는 0 이상의 숫자로 입력해 주세요.',
       'extra_shipping_island' => '도서산간 추가 배송비는 0 이상의 숫자로 입력해 주세요.',
       'return_shipping_fee' => '반품 배송비는 0 이상의 숫자로 입력해 주세요.',
@@ -646,14 +735,18 @@ class PostService extends BaseService
    *
    * @param array $data 입력 데이터
    * @param bool $enabled 옵션 사용 여부
+   * @param int $maxOptionCount 최대 옵션 등록 수
    *
    * @return array
    */
-  private function normalizeOptions(array $data, bool $enabled): array
+  private function normalizeOptions(array $data, bool $enabled, int $maxOptionCount): array
   {
     $rows = is_array($data['options'] ?? null) ? $data['options'] : [];
     if ($enabled && count($rows) === 0) {
       return $this->fail('옵션 분류명 및 옵션 항목을 먼저 적용해 주세요.', 'addOptionBtn');
+    }
+    if ($enabled && count($rows) > $maxOptionCount) {
+      return $this->fail('옵션은 최대 ' . $maxOptionCount . '개까지 등록할 수 있습니다.', 'addOptionBtn');
     }
 
     $options = [];
@@ -666,6 +759,14 @@ class PostService extends BaseService
       $optionVal1 = trim((string) ($row['option_val1'] ?? ''));
       if ($optionVal1 === '') {
         return $this->fail('옵션값 1을 입력해 주세요.', 'addOptionBtn');
+      }
+      if (mb_strlen($optionVal1) > self::MAX_OPTION_VALUE_LENGTH) {
+        return $this->fail('옵션값은 100자 이하로 입력해 주세요.', 'addOptionBtn');
+      }
+
+      $optionVal2 = trim((string) ($row['option_val2'] ?? ''));
+      if (mb_strlen($optionVal2) > self::MAX_OPTION_VALUE_LENGTH) {
+        return $this->fail('옵션값은 100자 이하로 입력해 주세요.', 'addOptionBtn');
       }
 
       $soldout = (string) ($row['soldout'] ?? '');
@@ -692,7 +793,7 @@ class PostService extends BaseService
 
       $options[] = array_merge([
         'option_val1' => $optionVal1,
-        'option_val2' => trim((string) ($row['option_val2'] ?? '')) ?: null,
+        'option_val2' => $optionVal2 === '' ? null : $optionVal2,
         'option_val3' => null,
         'soldout' => (int) $soldout,
         'is_display' => $isDisplay,
@@ -707,14 +808,18 @@ class PostService extends BaseService
    *
    * @param array $data 입력 데이터
    * @param bool $enabled 텍스트 옵션 사용 여부
+   * @param int $maxTextOptionCount 최대 텍스트 옵션 등록 수
    *
    * @return array
    */
-  private function normalizeTextOptions(array $data, bool $enabled): array
+  private function normalizeTextOptions(array $data, bool $enabled, int $maxTextOptionCount): array
   {
     $rows = is_array($data['text_options'] ?? null) ? $data['text_options'] : [];
     if ($enabled && count($rows) === 0) {
       return $this->fail('입력옵션을 추가해 주세요.', 'addTextOptionBtn');
+    }
+    if ($enabled && count($rows) > $maxTextOptionCount) {
+      return $this->fail('텍스트 옵션은 최대 ' . $maxTextOptionCount . '개까지 등록할 수 있습니다.', 'addTextOptionBtn');
     }
 
     $textOptions = [];
@@ -726,6 +831,9 @@ class PostService extends BaseService
       $title = trim((string) ($row['title'] ?? ''));
       if ($title === '') {
         return $this->fail('입력옵션 질문을 입력해 주세요.', 'addTextOptionBtn');
+      }
+      if (mb_strlen($title) > self::MAX_TEXT_OPTION_TITLE_LENGTH) {
+        return $this->fail('입력옵션 질문은 100자 이하로 입력해 주세요.', 'addTextOptionBtn');
       }
 
       $isRequired = (string) ($row['is_required'] ?? '');
@@ -739,8 +847,13 @@ class PostService extends BaseService
       }
 
       $maxLength = trim((string) ($row['max_length'] ?? ''));
-      if ($maxLength === '' || preg_match('/^\d+$/', $maxLength) !== 1 || (int) $maxLength < 1) {
-        return $this->fail('입력옵션 글자수 제한은 1 이상 입력해 주세요.', 'addTextOptionBtn');
+      if (
+        $maxLength === ''
+        || preg_match('/^\d+$/', $maxLength) !== 1
+        || (int) $maxLength < 1
+        || (int) $maxLength > self::MAX_TEXT_OPTION_INPUT_LENGTH
+      ) {
+        return $this->fail('입력옵션 글자수 제한은 1~1000자로 입력해 주세요.', 'addTextOptionBtn');
       }
 
       $textOptions[] = [
@@ -758,10 +871,11 @@ class PostService extends BaseService
    * 이미지 입력값을 정렬 순서에 맞게 구성합니다.
    *
    * @param array $data 입력 데이터
+   * @param int $maxImageCount 최대 이미지 등록 수
    *
    * @return array
    */
-  private function normalizeImages(array $data): array
+  private function normalizeImages(array $data, int $maxImageCount): array
   {
     $paths = [];
     $thumbnail = trim((string) ($data['thumbnail_url'] ?? ''));
@@ -777,8 +891,22 @@ class PostService extends BaseService
       }
     }
 
+    if (count($paths) === 0) {
+      return $this->fail('대표 이미지를 업로드해 주세요.', 'imageUploadInput');
+    }
+    if (count($paths) > $maxImageCount) {
+      return $this->fail('이미지는 최대 ' . $maxImageCount . '장까지 등록할 수 있습니다.', 'imageUploadInput');
+    }
+
     $images = [];
     foreach ($paths as $index => $path) {
+      if (mb_strlen($path) > self::MAX_IMAGE_PATH_LENGTH) {
+        return $this->fail('이미지 경로가 올바르지 않습니다.', 'imageUploadInput');
+      }
+      if ($this->isValidGoodsUploadFile($path) !== true) {
+        return $this->fail('상품 이미지로 업로드한 파일만 등록할 수 있습니다.', 'imageUploadInput');
+      }
+
       $images[] = [
         'file_path' => $path,
         'image_type' => 'LIST',
@@ -787,7 +915,7 @@ class PostService extends BaseService
       ];
     }
 
-    return $images;
+    return ['success' => true, 'images' => $images];
   }
 
   /**
@@ -804,15 +932,34 @@ class PostService extends BaseService
     foreach ($images as $image) {
       $path = (string) ($image['file_path'] ?? '');
       if ($path !== '') {
-        $uploadRepo->markAsUsed($path);
+        $uploadRepo->markAsUsedByPathAndCategory($path, 'goods');
       }
     }
 
     foreach ($this->extractImagePaths($content) as $path) {
-      $uploadRepo->markAsUsed($path);
+      if ($uploadRepo->existsByPathAndCategory($path, 'goods')) {
+        $uploadRepo->markAsUsedByPathAndCategory($path, 'goods');
+      }
     }
   }
 
+  /**
+   * 상품 이미지 업로드 장부에 등록된 미사용 파일인지 확인합니다.
+   *
+   * @param string $filePath 업로드 파일 경로
+   *
+   * @return bool
+   */
+  private function isValidGoodsUploadFile(string $filePath): bool
+  {
+    if ($filePath === '') {
+      return false;
+    }
+
+    return $this->container
+      ->get(UploadRepository::class)
+      ->existsByPathAndCategory($filePath, 'goods');
+  }
   /**
    * HTML 본문에서 업로드 이미지 경로를 추출합니다.
    *

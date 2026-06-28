@@ -152,6 +152,8 @@ interface AdminMarginApplyMessage {
   targetSelector?: string;
   supplyTargetSelector?: string;
   shippingTargetSelector?: string;
+  actualShippingTargetSelector?: string;
+  actualShippingFee?: number;
 }
 
 const closeAdminIframeModal = (root: HTMLElement): void => {
@@ -315,15 +317,19 @@ const openAdminMarginCalculator = (trigger: HTMLElement): void => {
   const supplyTarget = trigger.dataset.marginSupplyTarget || (document.querySelector<HTMLInputElement>('#supply_price') ? '#supply_price' : '#supplyPriceInput');
   const sellTarget = trigger.dataset.marginSellTarget || (document.querySelector<HTMLInputElement>('#sell_price') ? '#sell_price' : '#sellPriceInput');
   const shippingTarget = trigger.dataset.marginShippingTarget || (document.querySelector<HTMLInputElement>('#shipping_fee') ? '#shipping_fee' : '#shippingFeeInput');
+  const actualShippingTarget = trigger.dataset.marginActualShippingTarget || (document.querySelector<HTMLInputElement>('#actual_shipping_fee') ? '#actual_shipping_fee' : shippingTarget);
   const shippingRow = trigger.dataset.marginShippingRow || '';
   const shippingFee = shippingRow !== '' && isHiddenBySelector(shippingRow) ? '' : getNumericInputValue(shippingTarget);
+  const actualShippingFee = shippingRow !== '' && isHiddenBySelector(shippingRow) ? '' : getNumericInputValue(actualShippingTarget);
   const params = new URLSearchParams({
     supply_price: getNumericInputValue(supplyTarget),
     sell_price: getNumericInputValue(sellTarget),
     shipping_fee: shippingFee,
+    actual_shipping_fee: actualShippingFee,
     target: sellTarget,
     supply_target: supplyTarget,
     shipping_target: shippingTarget,
+    actual_shipping_target: actualShippingTarget,
   });
   const source = trigger.dataset.marginSource || '';
   if (source !== '') {
@@ -363,6 +369,9 @@ const applyAdminMarginCalculatorResult = (data: AdminMarginApplyMessage): void =
   setMarginTargetValue(data.targetSelector || '#sell_price', data.sellPrice);
   setMarginTargetValue(data.supplyTargetSelector || '#supply_price', data.supplyPrice);
   setMarginTargetValue(data.shippingTargetSelector || '#shipping_fee', data.shippingFee);
+  if (typeof data.actualShippingFee === 'number') {
+    setMarginTargetValue(data.actualShippingTargetSelector || '#actual_shipping_fee', data.actualShippingFee);
+  }
 
   document.querySelectorAll<HTMLElement>('.admin-iframe-modal').forEach((modal: HTMLElement): void => {
     closeAdminIframeModal(modal);
@@ -940,4 +949,514 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initDomemallImagePreview);
 } else {
   initDomemallImagePreview();
+}
+
+const syncAdminGoodsRadioIndicator = (group: HTMLElement): void => {
+  const checkedInput = group.querySelector<HTMLInputElement>('input[type="radio"]:checked');
+  const checkedLabel = checkedInput?.closest<HTMLElement>('.admin-goods-register-radio') ?? null;
+
+  if (!checkedLabel) {
+    group.style.setProperty('--radio-indicator-width', '0px');
+    return;
+  }
+
+  group.style.setProperty('--radio-indicator-x', `${checkedLabel.offsetLeft}px`);
+  group.style.setProperty('--radio-indicator-width', `${checkedLabel.offsetWidth}px`);
+};
+
+const syncAllAdminGoodsRadioIndicators = (): void => {
+  document.querySelectorAll<HTMLElement>('.admin-goods-register-radio-group').forEach((group: HTMLElement): void => {
+    syncAdminGoodsRadioIndicator(group);
+  });
+};
+
+const initAdminGoodsRadioIndicators = (): void => {
+  const groups = document.querySelectorAll<HTMLElement>('.admin-goods-register-radio-group');
+  if (groups.length === 0) {
+    return;
+  }
+
+  groups.forEach((group: HTMLElement): void => {
+    group.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((input: HTMLInputElement): void => {
+      input.addEventListener('change', (): void => syncAdminGoodsRadioIndicator(group));
+    });
+  });
+
+  syncAllAdminGoodsRadioIndicators();
+  window.requestAnimationFrame(syncAllAdminGoodsRadioIndicators);
+  window.setTimeout(syncAllAdminGoodsRadioIndicators, 120);
+  window.addEventListener('resize', syncAllAdminGoodsRadioIndicators);
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminGoodsRadioIndicators);
+} else {
+  initAdminGoodsRadioIndicators();
+}
+
+const syncAdminGoodsRegisterSettingShippingRows = (): void => {
+  const shippingType = document.querySelector<HTMLInputElement>('input[name="default_shipping_type"]:checked')?.value ?? '';
+  document.querySelectorAll<HTMLElement>('[data-setting-quantity-shipping-row]').forEach((row: HTMLElement): void => {
+    const isVisible = shippingType === 'QUANTITY';
+    row.hidden = !isVisible;
+    row.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>('input, select, textarea, button').forEach((control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement): void => {
+      control.disabled = !isVisible;
+    });
+  });
+};
+
+const initAdminGoodsRegisterSettingShippingRows = (): void => {
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[name="default_shipping_type"]');
+  if (inputs.length === 0) {
+    return;
+  }
+
+  inputs.forEach((input: HTMLInputElement): void => {
+    input.addEventListener('change', syncAdminGoodsRegisterSettingShippingRows);
+  });
+
+  syncAdminGoodsRegisterSettingShippingRows();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminGoodsRegisterSettingShippingRows);
+} else {
+  initAdminGoodsRegisterSettingShippingRows();
+}
+
+interface AdminSettingSaveResponse {
+  success: boolean;
+  message?: string;
+  field?: string;
+}
+
+const stripAdminSettingNumber = (value: string): string => value.replace(/,/g, '').trim();
+
+const focusAdminSettingField = (form: HTMLFormElement, fieldName: string): void => {
+  const field = Array.from(form.elements).find((control: Element): boolean => {
+    return control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement
+      ? control.name === fieldName || control.id === fieldName
+      : false;
+  });
+
+  if (!(field instanceof HTMLElement)) {
+    return;
+  }
+
+  field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout((): void => field.focus(), 180);
+};
+
+const createAdminSettingFormData = (form: HTMLFormElement): FormData => {
+  const formData = new FormData(form);
+
+  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"][name]').forEach((input: HTMLInputElement): void => {
+    if (!input.disabled) {
+      formData.set(input.name, stripAdminSettingNumber(input.value));
+    }
+  });
+
+  const shippingType = form.querySelector<HTMLInputElement>('input[name="default_shipping_type"]:checked')?.value ?? '';
+  if (shippingType !== 'QUANTITY') {
+    formData.set('shipping_qty_limit', '0');
+  }
+
+  return formData;
+};
+
+const initAdminGoodsRegisterSettingForm = (): void => {
+  const form = document.querySelector<HTMLFormElement>('#goodsRegisterSettingForm');
+  if (!form) {
+    return;
+  }
+
+  const submitButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('button[type="submit"]'));
+  const setSubmitting = (isSubmitting: boolean): void => {
+    submitButtons.forEach((button: HTMLButtonElement): void => {
+      button.disabled = isSubmitting;
+    });
+  };
+
+  form.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
+    event.preventDefault();
+
+    if (!window.axios) {
+      await window.uiAlert?.('요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await window.axios.post<AdminSettingSaveResponse>(form.action, createAdminSettingFormData(form), {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      await window.uiAlert?.(response.data.message ?? '상품 등록설정이 저장되었습니다.');
+    } catch (error: unknown) {
+      if (window.axios.isAxiosError<AdminSettingSaveResponse>(error)) {
+        const payload = error.response?.data;
+        await window.uiAlert?.(payload?.message ?? '상품 등록설정을 저장하지 못했습니다.');
+        if (payload?.field) {
+          focusAdminSettingField(form, payload.field);
+        }
+        return;
+      }
+
+      await window.uiAlert?.('상품 등록설정을 저장하지 못했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  form.addEventListener('reset', (): void => {
+    window.setTimeout((): void => {
+      syncAdminGoodsRegisterSettingShippingRows();
+      syncAllAdminGoodsRadioIndicators();
+    }, 0);
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminGoodsRegisterSettingForm);
+} else {
+  initAdminGoodsRegisterSettingForm();
+}
+interface AdminPlatformFeeResponse {
+  success: boolean;
+  message?: string;
+  field?: string;
+}
+
+interface AdminPlatformFeeEditData {
+  id: string;
+  platformName: string;
+  platformCode: string;
+  platformFeeRate: string;
+  shippingFeeRate: string;
+  instantDiscountRate: string;
+  additionalDiscountRate: string;
+  additionalFixedDiscount: string;
+  sortOrder: string;
+  isDefault: string;
+  memo: string;
+}
+
+const stripAdminPlatformFeeNumber = (value: string): string => value.replace(/,/g, '').trim();
+
+const focusAdminPlatformFeeField = (form: HTMLFormElement, fieldName: string | undefined): void => {
+  if (!fieldName) {
+    return;
+  }
+
+  const field = Array.from(form.elements).find((control: Element): boolean => {
+    return control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement
+      ? control.name === fieldName || control.id === fieldName
+      : false;
+  });
+
+  if (!(field instanceof HTMLElement)) {
+    return;
+  }
+
+  field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout((): void => field.focus(), 180);
+};
+
+const getAdminPlatformFeeInput = (form: HTMLFormElement, name: string): HTMLInputElement | null => {
+  return form.querySelector<HTMLInputElement>(`[name="${name}"]`);
+};
+
+const getAdminPlatformFeeTextarea = (form: HTMLFormElement, name: string): HTMLTextAreaElement | null => {
+  return form.querySelector<HTMLTextAreaElement>(`[name="${name}"]`);
+};
+
+const createAdminPlatformFeeFormData = (form: HTMLFormElement): FormData => {
+  const formData = new FormData(form);
+
+  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"][name], input[inputmode="decimal"][name]').forEach((input: HTMLInputElement): void => {
+    formData.set(input.name, stripAdminPlatformFeeNumber(input.value));
+  });
+
+  if (!form.querySelector<HTMLInputElement>('[name="is_default"]')?.checked) {
+    formData.set('is_default', 'N');
+  }
+
+  return formData;
+};
+
+const createAdminPlatformFeeDeleteFormData = (form: HTMLFormElement): FormData => {
+  const formData = new FormData();
+  form.querySelectorAll<HTMLInputElement>('input[type="hidden"][name]').forEach((input: HTMLInputElement): void => {
+    if (input.name !== 'id') {
+      formData.set(input.name, input.value);
+    }
+  });
+
+  return formData;
+};
+
+const validateAdminPlatformFeeForm = (form: HTMLFormElement): { message: string; field: string } | null => {
+  const platformName = getAdminPlatformFeeInput(form, 'platform_name')?.value.trim() ?? '';
+  if (platformName === '' || platformName.length > 50) {
+    return { message: '플랫폼명을 50자 이내로 입력해 주세요.', field: 'platform_name' };
+  }
+
+  const platformCode = getAdminPlatformFeeInput(form, 'platform_code')?.value.trim() ?? '';
+  if (!/^[a-z0-9_-]{2,50}$/.test(platformCode)) {
+    return { message: '플랫폼 코드는 영문 소문자, 숫자, 하이픈, 언더바 2~50자로 입력해 주세요.', field: 'platform_code' };
+  }
+
+  const rateFields: Array<{ name: string; label: string }> = [
+    { name: 'platform_fee_rate', label: '플랫폼 수수료' },
+    { name: 'shipping_fee_rate', label: '배송비 수수료' },
+    { name: 'instant_discount_rate', label: '즉시할인' },
+    { name: 'additional_discount_rate', label: '부가할인' },
+  ];
+
+  for (const field of rateFields) {
+    const value = stripAdminPlatformFeeNumber(getAdminPlatformFeeInput(form, field.name)?.value ?? '');
+    const numberValue = Number(value);
+    if (value === '' || Number.isNaN(numberValue) || numberValue < 0 || numberValue > 100) {
+      return { message: `${field.label}는 0~100 사이의 숫자로 입력해 주세요.`, field: field.name };
+    }
+  }
+
+  const fixedDiscount = stripAdminPlatformFeeNumber(getAdminPlatformFeeInput(form, 'additional_fixed_discount')?.value ?? '');
+  if (!/^\d+$/.test(fixedDiscount)) {
+    return { message: '부가정액할인은 0 이상의 숫자로 입력해 주세요.', field: 'additional_fixed_discount' };
+  }
+
+  const sortOrder = stripAdminPlatformFeeNumber(getAdminPlatformFeeInput(form, 'sort_order')?.value ?? '');
+  if (!/^\d+$/.test(sortOrder)) {
+    return { message: '정렬 순서는 0 이상의 숫자로 입력해 주세요.', field: 'sort_order' };
+  }
+
+  const memo = getAdminPlatformFeeTextarea(form, 'memo')?.value.trim() ?? '';
+  if (memo.length > 255) {
+    return { message: '메모는 255자 이내로 입력해 주세요.', field: 'memo' };
+  }
+
+  return null;
+};
+
+const setAdminPlatformFeeCreateMode = (form: HTMLFormElement): void => {
+  const createAction = form.dataset.createAction ?? form.action;
+  form.action = createAction;
+
+  const textValues: Record<string, string> = {
+    id: '',
+    platform_name: '',
+    platform_code: '',
+    platform_fee_rate: '0',
+    shipping_fee_rate: '0',
+    instant_discount_rate: '0',
+    additional_discount_rate: '0',
+    additional_fixed_discount: '0',
+    sort_order: '0',
+  };
+
+  Object.entries(textValues).forEach(([name, value]: [string, string]): void => {
+    const input = getAdminPlatformFeeInput(form, name);
+    if (input) {
+      input.value = value;
+      input.defaultValue = value;
+    }
+  });
+
+  const isDefault = getAdminPlatformFeeInput(form, 'is_default');
+  if (isDefault) {
+    isDefault.checked = false;
+    isDefault.defaultChecked = false;
+  }
+
+  const memo = getAdminPlatformFeeTextarea(form, 'memo');
+  if (memo) {
+    memo.value = '';
+    memo.defaultValue = '';
+  }
+
+  const title = document.querySelector<HTMLElement>('[data-platform-fee-form-title]');
+  if (title) {
+    title.textContent = '플랫폼 등록';
+  }
+
+  const submit = form.querySelector<HTMLButtonElement>('[data-platform-fee-submit]');
+  if (submit) {
+    submit.textContent = '등록';
+  }
+};
+
+const setAdminPlatformFeeEditMode = (form: HTMLFormElement, data: AdminPlatformFeeEditData): void => {
+  const createAction = form.dataset.createAction ?? form.action;
+  form.action = `${createAction}/${data.id}`;
+
+  const values: Record<string, string> = {
+    id: data.id,
+    platform_name: data.platformName,
+    platform_code: data.platformCode,
+    platform_fee_rate: data.platformFeeRate,
+    shipping_fee_rate: data.shippingFeeRate,
+    instant_discount_rate: data.instantDiscountRate,
+    additional_discount_rate: data.additionalDiscountRate,
+    additional_fixed_discount: data.additionalFixedDiscount,
+    sort_order: data.sortOrder,
+  };
+
+  Object.entries(values).forEach(([name, value]: [string, string]): void => {
+    const input = getAdminPlatformFeeInput(form, name);
+    if (input) {
+      input.value = value;
+    }
+  });
+
+  const isDefault = getAdminPlatformFeeInput(form, 'is_default');
+  if (isDefault) {
+    isDefault.checked = data.isDefault === 'Y';
+  }
+
+  const memo = getAdminPlatformFeeTextarea(form, 'memo');
+  if (memo) {
+    memo.value = data.memo;
+  }
+
+  const title = document.querySelector<HTMLElement>('[data-platform-fee-form-title]');
+  if (title) {
+    title.textContent = '플랫폼 수정';
+  }
+
+  const submit = form.querySelector<HTMLButtonElement>('[data-platform-fee-submit]');
+  if (submit) {
+    submit.textContent = '수정';
+  }
+
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.setTimeout((): void => getAdminPlatformFeeInput(form, 'platform_name')?.focus(), 180);
+};
+
+const initAdminPlatformFeeSetting = (): void => {
+  const form = document.querySelector<HTMLFormElement>('#platformFeeSettingForm');
+  if (!form) {
+    return;
+  }
+
+  const submitButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('button[type="submit"]'));
+  const setSubmitting = (isSubmitting: boolean): void => {
+    submitButtons.forEach((button: HTMLButtonElement): void => {
+      button.disabled = isSubmitting;
+    });
+  };
+
+  form.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
+    event.preventDefault();
+
+    if (!window.axios) {
+      await window.uiAlert?.('요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+      return;
+    }
+
+    const validation = validateAdminPlatformFeeForm(form);
+    if (validation) {
+      await window.uiAlert?.(validation.message);
+      focusAdminPlatformFeeField(form, validation.field);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await window.axios.post<AdminPlatformFeeResponse>(form.action, createAdminPlatformFeeFormData(form), {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      await window.uiAlert?.(response.data.message ?? '플랫폼 수수료가 저장되었습니다.');
+      window.location.reload();
+    } catch (error: unknown) {
+      if (window.axios.isAxiosError<AdminPlatformFeeResponse>(error)) {
+        const payload = error.response?.data;
+        await window.uiAlert?.(payload?.message ?? '플랫폼 수수료를 저장하지 못했습니다.');
+        focusAdminPlatformFeeField(form, payload?.field);
+        return;
+      }
+
+      await window.uiAlert?.('플랫폼 수수료를 저장하지 못했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  form.addEventListener('reset', (event: Event): void => {
+    event.preventDefault();
+    setAdminPlatformFeeCreateMode(form);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-platform-fee-edit]').forEach((button: HTMLButtonElement): void => {
+    button.addEventListener('click', (): void => {
+      setAdminPlatformFeeEditMode(form, {
+        id: button.dataset.id ?? '',
+        platformName: button.dataset.platformName ?? '',
+        platformCode: button.dataset.platformCode ?? '',
+        platformFeeRate: button.dataset.platformFeeRate ?? '0',
+        shippingFeeRate: button.dataset.shippingFeeRate ?? '0',
+        instantDiscountRate: button.dataset.instantDiscountRate ?? '0',
+        additionalDiscountRate: button.dataset.additionalDiscountRate ?? '0',
+        additionalFixedDiscount: button.dataset.additionalFixedDiscount ?? '0',
+        sortOrder: button.dataset.sortOrder ?? '0',
+        isDefault: button.dataset.isDefault ?? 'N',
+        memo: button.dataset.memo ?? '',
+      });
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-platform-fee-delete]').forEach((button: HTMLButtonElement): void => {
+    button.addEventListener('click', async (): Promise<void> => {
+      if (!window.axios) {
+        await window.uiAlert?.('요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+        return;
+      }
+
+      const confirmed = await window.uiConfirm?.('플랫폼 수수료를 삭제하시겠습니까?', '확인');
+      if (confirmed !== true) {
+        return;
+      }
+
+      const deleteUrl = button.dataset.deleteUrl ?? '';
+      if (deleteUrl === '') {
+        await window.uiAlert?.('삭제 요청 주소가 올바르지 않습니다. 목록에서 다시 선택해 주세요.');
+        return;
+      }
+
+      button.disabled = true;
+      try {
+        const response = await window.axios.post<AdminPlatformFeeResponse>(deleteUrl, createAdminPlatformFeeDeleteFormData(form), {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+
+        await window.uiAlert?.(response.data.message ?? '플랫폼 수수료가 삭제되었습니다.');
+        window.location.reload();
+      } catch (error: unknown) {
+        if (window.axios.isAxiosError<AdminPlatformFeeResponse>(error)) {
+          await window.uiAlert?.(error.response?.data?.message ?? '플랫폼 수수료를 삭제하지 못했습니다.');
+          return;
+        }
+
+        await window.uiAlert?.('플랫폼 수수료를 삭제하지 못했습니다.');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminPlatformFeeSetting);
+} else {
+  initAdminPlatformFeeSetting();
 }

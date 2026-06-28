@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin\Goods\MarginCalc;
 
+use App\Repositories\Admin\PlatformFeeRepository;
 use App\Services\BaseService;
 
 class PageService extends BaseService
@@ -19,13 +20,19 @@ class PageService extends BaseService
   {
     $query = is_array($params['query'] ?? null) ? $params['query'] : [];
 
+    $repository = $this->container->get(PlatformFeeRepository::class);
+    $platformFees = array_map([$this, 'formatPlatformFee'], $repository->getPlatformFees());
+
     return [
       'calculator' => [
         'supply_price' => $this->normalizeMoney($query['supply_price'] ?? null),
         'sell_price' => $this->normalizeMoney($query['sell_price'] ?? null),
         'shipping_fee' => $this->normalizeMoney($query['shipping_fee'] ?? null),
+        'actual_shipping_fee' => $this->normalizeMoney($query['actual_shipping_fee'] ?? ($query['shipping_fee'] ?? null)),
         'can_apply' => $this->isGoodsFormSource($query['source'] ?? null),
       ],
+      'platform_fees' => $platformFees,
+      'default_platform_code' => $this->getDefaultPlatformCode($platformFees),
     ];
   }
 
@@ -61,5 +68,44 @@ class PageService extends BaseService
     }
 
     return max(0, (int) $numeric);
+  }
+
+  /**
+   * 마진 계산기 출력용 플랫폼 수수료 값을 보정합니다.
+   *
+   * @param array $fee 원본 플랫폼 수수료 데이터
+   *
+   * @return array
+   */
+  private function formatPlatformFee(array $fee): array
+  {
+    foreach (['platform_fee_rate', 'shipping_fee_rate', 'instant_discount_rate', 'additional_discount_rate'] as $field) {
+      $fee[$field] = rtrim(rtrim(number_format((float) ($fee[$field] ?? 0), 3, '.', ''), '0'), '.');
+    }
+
+    $fee['additional_fixed_discount'] = (int) ($fee['additional_fixed_discount'] ?? 0);
+    $fee['platform_name'] = (string) ($fee['platform_name'] ?? '');
+    $fee['platform_code'] = (string) ($fee['platform_code'] ?? '');
+    $fee['is_default'] = (string) ($fee['is_default'] ?? 'N');
+
+    return $fee;
+  }
+
+  /**
+   * 기본 플랫폼 코드를 조회합니다.
+   *
+   * @param array $platformFees 플랫폼 수수료 목록
+   *
+   * @return string
+   */
+  private function getDefaultPlatformCode(array $platformFees): string
+  {
+    foreach ($platformFees as $fee) {
+      if (($fee['is_default'] ?? 'N') === 'Y') {
+        return (string) ($fee['platform_code'] ?? '');
+      }
+    }
+
+    return '';
   }
 }

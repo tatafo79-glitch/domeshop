@@ -1245,8 +1245,15 @@ $admin-tile: #272729;
   }
 
   .admin-member-lists-empty {
-    @apply py-8 text-center text-[14px] font-normal;
-    color: $admin-muted;
+    @apply py-10 text-center;
+  }
+
+  .admin-member-lists-empty-icon {
+    @apply mx-auto mb-3 h-10 w-10 text-slate-200;
+  }
+
+  .admin-member-lists-empty span {
+    @apply text-[13px] font-medium text-slate-500;
   }
 
 
@@ -1322,7 +1329,7 @@ $admin-tile: #272729;
   }
 
   .admin-member-asset-history-empty-icon {
-    @apply mx-auto mb-3 h-12 w-12 text-slate-300;
+    @apply mx-auto mb-3 h-10 w-10 text-slate-200;
   }
 
   .admin-member-asset-history-empty span {
@@ -1847,7 +1854,7 @@ $admin-tile: #272729;
   }
 
   .admin-member-detail-memo-empty-icon {
-    @apply mb-3 h-12 w-12 text-slate-300;
+    @apply mb-3 h-10 w-10 text-slate-200;
   }
 
   .admin-member-detail-memo-empty-text {
@@ -1958,7 +1965,7 @@ $admin-tile: #272729;
   }
 
   .admin-member-detail-audit-empty-icon {
-    @apply mb-3 h-12 w-12 text-slate-200;
+    @apply mb-3 h-10 w-10 text-slate-200;
   }
 
   .admin-member-detail-audit-empty-text {
@@ -2607,7 +2614,7 @@ $admin-tile: #272729;
   }
 
   .admin-member-asset-empty-icon {
-    @apply mb-3 h-12 w-12 text-slate-300;
+    @apply mb-3 h-10 w-10 text-slate-200;
   }
 
   .admin-member-asset-empty-text {
@@ -2689,6 +2696,273 @@ $admin-tile: #272729;
   .admin-ui-dialog-button:focus {
     outline: 2px solid $admin-blue-focus;
     outline-offset: 2px;
+  }
+  .admin-setting-goods-register {
+    @apply flex flex-col gap-6;
+  }
+
+  .admin-setting-goods-register > .admin-page-desc-wrap {
+    @apply mb-0;
+  }
+
+  .admin-setting-goods-register-form {
+    @apply flex flex-col gap-6;
+  }
+
+  .admin-setting-goods-register-section {
+    @apply overflow-hidden;
+  }
+
+  .admin-setting-goods-register-body {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-goods-register-control {
+    @apply flex min-w-0 items-center;
+  }
+
+  .admin-setting-goods-register-control.is-narrow .admin-input {
+    @apply sm:max-w-40;
+  }
+
+  .admin-setting-goods-register-checks {
+    @apply flex flex-wrap items-center gap-5;
+  }
+
+  .admin-setting-goods-register-formula-list {
+    @apply flex flex-col gap-1 text-[13px] font-normal text-slate-600;
+  }
+
+  .admin-setting-goods-register-inline-text {
+    @apply ml-3 whitespace-nowrap text-[13px] font-normal text-slate-700;
+  }
+
+  .admin-setting-goods-register-two-col-row {
+    @apply grid grid-cols-1 p-0 lg:grid-cols-2;
+  }
+
+  .admin-setting-goods-register-half-row {
+    @apply flex flex-col border-b last:border-b-0 sm:flex-row lg:border-b-0 lg:border-r lg:last:border-r-0;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-goods-register-half-row .admin-form-label {
+    @apply sm:w-[206px];
+  }
+
+  .admin-setting-goods-register-price-control {
+    @apply flex min-w-0 w-full items-center;
+  }
+
+  .admin-setting-goods-register-price-control .admin-goods-register-unit-input {
+    @apply w-full sm:w-32;
+  }
+
+  .admin-setting-goods-register-price-control .admin-input {
+    @apply w-full pr-10 text-right;
+  }
+
+  .admin-setting-goods-register-three-col-row {
+    @apply grid grid-cols-1 p-0 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .admin-setting-goods-register-field {
+    @apply flex min-h-[74px] flex-col gap-2 border-b px-6 py-4 md:border-r xl:border-b-0;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-goods-register-field:last-child {
+    @apply border-b-0;
+  }
+
+  .admin-setting-goods-register-field:nth-child(2n) {
+    @apply md:border-r-0 xl:border-r;
+  }
+
+  .admin-setting-goods-register-field:nth-child(3n) {
+    @apply xl:border-r-0;
+  }
+
+  .admin-setting-goods-register-field > span:first-child {
+    @apply text-[13px] font-semibold text-slate-700;
+  }
+
+  .admin-setting-goods-register-field .admin-goods-register-unit-input {
+    @apply max-w-none w-full sm:max-w-44;
+  }
+
+  .admin-setting-goods-register-field .admin-input {
+    @apply w-full;
+  }
+
+  .admin-setting-goods-register-field.is-check {
+    @apply justify-center;
+  }
+
+  .admin-setting-goods-register-bottom-actions {
+    @apply flex justify-end gap-3;
+  }
+  .admin-status-badge {
+    @apply inline-flex h-6 items-center border px-2 text-[13px] font-semibold;
+  }
+
+  .admin-status-badge.is-info {
+    @apply border-blue-200 bg-blue-50 text-blue-700;
+  }
+
+  .admin-status-badge.is-success {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-700;
+  }
+
+  .admin-status-badge.is-muted {
+    @apply border-slate-200 bg-slate-50 text-slate-500;
+  }
+  .admin-setting-platform-fee {
+    @apply flex flex-col gap-6;
+  }
+
+  .admin-setting-platform-fee > .admin-page-desc-wrap {
+    @apply mb-0;
+  }
+
+  .admin-setting-platform-fee-grid {
+    @apply grid grid-cols-1 gap-6 xl:grid-cols-[minmax(420px,0.84fr)_minmax(0,1.36fr)];
+  }
+
+  .admin-setting-platform-fee-section {
+    @apply overflow-hidden;
+  }
+
+  .admin-setting-platform-fee-form {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-platform-fee-body {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-platform-fee-control {
+    @apply flex min-w-0 w-full items-center;
+  }
+
+  .admin-setting-platform-fee-control.is-stacked {
+    @apply flex-col items-stretch gap-2;
+  }
+
+  .admin-setting-platform-fee-control .admin-textarea {
+    @apply w-full;
+  }
+
+  .admin-setting-platform-fee-two-col-row {
+    @apply grid grid-cols-1 p-0 lg:grid-cols-2;
+  }
+
+  .admin-setting-platform-fee-half-row {
+    @apply flex flex-col border-b last:border-b-0 sm:flex-row lg:border-b-0 lg:border-r lg:last:border-r-0;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-platform-fee-half-row .admin-form-label {
+    @apply sm:w-[148px];
+  }
+
+  .admin-setting-platform-fee-price-control {
+    @apply flex min-w-0 w-full items-center;
+  }
+
+  .admin-setting-platform-fee-price-control .admin-goods-register-unit-input {
+    @apply w-full sm:w-36;
+  }
+
+  .admin-setting-platform-fee-price-control .admin-input {
+    @apply w-full pr-10 text-right;
+  }
+
+  .admin-setting-platform-fee-price-control .admin-setting-platform-fee-sort-input {
+    @apply w-full pr-3 text-right sm:w-36;
+  }
+
+  .admin-setting-platform-fee-checks {
+    @apply flex flex-wrap items-center gap-5;
+  }
+
+  .admin-setting-platform-fee-actions {
+    @apply flex justify-end gap-3 border-t px-6 py-4;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-platform-fee-table-wrap {
+    @apply overflow-x-auto pb-px;
+  }
+
+  .admin-setting-platform-fee-table {
+    @apply min-w-full w-full table-auto border-collapse text-[13px];
+  }
+
+  .admin-setting-platform-fee-table th {
+    @apply whitespace-nowrap border-b bg-slate-50 px-3 py-3 text-left font-semibold text-slate-700;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-platform-fee-table td {
+    @apply border-b px-3 py-3 align-middle text-slate-700;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-platform-fee-table th.is-center,
+  .admin-setting-platform-fee-table td.is-center {
+    @apply whitespace-nowrap text-center;
+  }
+
+  .admin-setting-platform-fee-table th.is-number,
+  .admin-setting-platform-fee-table td.is-number {
+    @apply whitespace-nowrap text-right tabular-nums;
+  }
+
+
+  .admin-setting-platform-fee-name {
+    @apply flex min-w-36 max-w-52 flex-col gap-1;
+  }
+
+  .admin-setting-platform-fee-name strong {
+    @apply text-[13px] font-semibold text-slate-900;
+  }
+
+  .admin-setting-platform-fee-name span {
+    @apply text-[13px] font-normal text-slate-500;
+  }
+
+  .admin-setting-platform-fee-badges {
+    @apply flex flex-wrap justify-center gap-1.5;
+  }
+
+  .admin-setting-platform-fee-placeholder {
+    @apply text-[13px] font-normal text-slate-400;
+  }
+
+  .admin-setting-platform-fee-row-actions {
+    @apply flex flex-wrap justify-center gap-2;
+  }
+
+  .admin-setting-platform-fee-row-actions .admin-btn-secondary {
+    @apply h-8 px-3 py-1 text-[13px];
+  }
+
+  .admin-setting-platform-fee-row-actions .admin-btn-secondary.is-danger {
+    @apply border-red-200 bg-red-50 text-red-600 hover:bg-red-100;
+  }
+
+  .admin-setting-platform-fee-empty {
+    @apply h-44 p-0 text-center text-[13px] text-slate-500;
+  }
+
+  .admin-setting-platform-fee-empty-inner {
+    @apply flex min-h-44 flex-col items-center justify-center gap-2;
+  }
+
+  .admin-setting-platform-fee-empty-icon {
+    @apply h-10 w-10 text-slate-200;
+    stroke-width: 1.5;
   }
   .admin-goods-register {
     @apply flex flex-col gap-6;
@@ -3118,7 +3392,7 @@ $admin-tile: #272729;
   }
 
   .admin-goods-register-image-dropzone-icon {
-    @apply h-10 w-10 text-slate-400;
+    @apply h-10 w-10 text-slate-200;
   }
 
   .admin-goods-register-image-dropzone strong {
@@ -3344,7 +3618,16 @@ $admin-tile: #272729;
   }
 
   .admin-goods-register-option-empty-cell {
-    @apply h-36;
+    @apply h-36 p-0;
+  }
+
+  .admin-goods-register-option-empty-inner {
+    @apply flex min-h-36 flex-col items-center justify-center gap-2;
+  }
+
+  .admin-goods-register-option-empty-icon {
+    @apply h-10 w-10 text-slate-200;
+    stroke-width: 1.5;
   }
   .admin-goods-register-field-block.is-hidden {
     @apply hidden;

@@ -3,15 +3,18 @@ interface MarginApplyMessage {
   sellPrice: number;
   supplyPrice: number;
   shippingFee: number;
+  actualShippingFee: number;
   targetSelector: string;
   supplyTargetSelector: string;
   shippingTargetSelector: string;
+  actualShippingTargetSelector: string;
 }
 
 
 const targetSelector = new URLSearchParams(window.location.search).get('target') || '#sell_price';
 const supplyTargetSelector = new URLSearchParams(window.location.search).get('supply_target') || '#supply_price';
 const shippingTargetSelector = new URLSearchParams(window.location.search).get('shipping_target') || '#shipping_fee';
+const actualShippingTargetSelector = new URLSearchParams(window.location.search).get('actual_shipping_target') || '#actual_shipping_fee';
 
 const getInput = (id: string): HTMLInputElement | null => document.getElementById(id) as HTMLInputElement | null;
 const getSelect = (id: string): HTMLSelectElement | null => document.getElementById(id) as HTMLSelectElement | null;
@@ -230,16 +233,30 @@ displayPriceInput?.addEventListener('input', (): void => {
   calculateMargin();
 });
 
-platformSelect?.addEventListener('change', (): void => {
-  const option = platformSelect.options[platformSelect.selectedIndex];
-  if (marketFeeInput) {
-    marketFeeInput.value = option.dataset.market || '0';
+const setInputValue = (input: HTMLInputElement | null, value: string): void => {
+  if (input) {
+    input.value = value;
   }
-  if (shippingFeeRateInput) {
-    shippingFeeRateInput.value = option.dataset.shipping || '0';
+};
+
+const applySelectedPlatform = (): void => {
+  if (!platformSelect) {
+    return;
+  }
+
+  const option = platformSelect.options[platformSelect.selectedIndex];
+  setInputValue(marketFeeInput, option.dataset.market || '0');
+  setInputValue(shippingFeeRateInput, option.dataset.shipping || '0');
+  setInputValue(instantDiscountRateInput, option.dataset.instant || '0');
+  setInputValue(addDiscountRateInput, option.dataset.add || '0');
+  setInputValue(addFlatDiscountInput, option.dataset.flat || '0');
+  if (addFlatDiscountInput) {
+    formatMoneyInput(addFlatDiscountInput);
   }
   calculateMargin();
-});
+};
+
+platformSelect?.addEventListener('change', applySelectedPlatform);
 
 resetButton?.addEventListener('click', (): void => {
   moneyInputs.forEach((input: HTMLInputElement): void => {
@@ -255,9 +272,11 @@ resetButton?.addEventListener('click', (): void => {
     shippingFeeRateInput.value = document.body.dataset.defaultShippingFee || '0';
   }
   if (platformSelect) {
-    platformSelect.value = '';
+    platformSelect.value = document.body.dataset.defaultPlatformCode || '';
+    applySelectedPlatform();
+  } else {
+    calculateMargin();
   }
-  calculateMargin();
   sellPriceInput?.focus();
 });
 
@@ -273,14 +292,17 @@ applyButton?.addEventListener('click', (): void => {
     sellPrice,
     supplyPrice: getMoney(supplyPriceInput),
     shippingFee: getMoney(recvShippingInput),
+    actualShippingFee: getMoney(sentShippingInput),
     targetSelector,
     supplyTargetSelector,
     shippingTargetSelector,
+    actualShippingTargetSelector,
   };
   window.parent.postMessage(message, window.location.origin);
 });
 
 
+applySelectedPlatform();
 calculateMargin();
 
 export {};
