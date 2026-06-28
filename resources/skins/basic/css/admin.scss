@@ -48,6 +48,47 @@ $admin-tile: #272729;
     color: $admin-ink;
     letter-spacing: 0;
   }
+  .admin-collapsible-card-title {
+    @apply w-full min-w-0;
+  }
+  .admin-mobile-card-toggle {
+    @apply flex w-full min-w-0 cursor-default items-center justify-between gap-3 border-0 bg-transparent p-0 text-left text-[14px] font-semibold;
+    color: $admin-ink;
+    letter-spacing: 0;
+  }
+  .admin-mobile-card-toggle > span {
+    @apply min-w-0 truncate;
+  }
+  .admin-mobile-card-toggle-icon {
+    @apply hidden h-5 w-5 shrink-0 rotate-180 transition-transform;
+    stroke-width: 2.75;
+  }
+  [data-admin-mobile-collapsible-card].is-collapsed > .admin-card-header {
+    @apply border-b-0;
+  }
+  [data-admin-mobile-collapsible-card].is-collapsed .admin-mobile-card-toggle-icon {
+    @apply rotate-0;
+  }
+  [data-admin-mobile-collapsible-card][data-admin-collapsible-mode="all"] .admin-mobile-card-toggle {
+    @apply cursor-pointer;
+  }
+  [data-admin-mobile-collapsible-card][data-admin-collapsible-mode="all"] .admin-mobile-card-toggle-icon {
+    @apply block;
+  }
+  [data-admin-mobile-collapsible-card][data-admin-collapsible-mode="all"].is-collapsed [data-admin-collapsible-content] {
+    @apply hidden;
+  }
+  @media (max-width: 767px) {
+    [data-admin-mobile-collapsible-card] .admin-mobile-card-toggle {
+      @apply cursor-pointer;
+    }
+    [data-admin-mobile-collapsible-card] .admin-mobile-card-toggle-icon {
+      @apply block;
+    }
+    [data-admin-mobile-collapsible-card].is-collapsed [data-admin-collapsible-content] {
+      @apply hidden;
+    }
+  }
   .admin-input {
     height: 38px !important;
     scroll-margin-top: 150px;
@@ -159,6 +200,18 @@ $admin-tile: #272729;
       transform: scale(0.95);
     }
   }
+
+
+  .admin-btn-primary.is-success {
+    @apply border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+  .admin-btn-secondary.is-success {
+    @apply border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100;
+  }
+  .admin-btn-secondary.is-danger {
+    @apply border-red-200 bg-red-50 text-red-600 hover:bg-red-100;
+  }
+
   .admin-table-th {
     @apply px-6 py-3.5 whitespace-nowrap text-[13px] text-center font-semibold;
     color: $admin-ink;
@@ -2849,8 +2902,8 @@ $admin-tile: #272729;
     @apply flex-col items-stretch gap-2;
   }
 
-  .admin-setting-platform-fee-control .admin-textarea {
-    @apply w-full;
+  .admin-setting-platform-fee-control textarea.admin-input {
+    @apply h-auto min-h-24 w-full resize-y;
   }
 
   .admin-setting-platform-fee-two-col-row {
@@ -2964,6 +3017,154 @@ $admin-tile: #272729;
     @apply h-10 w-10 text-slate-200;
     stroke-width: 1.5;
   }
+  .admin-status-badge.is-warning {
+    @apply border-amber-200 bg-amber-50 text-amber-700;
+  }
+
+  .admin-status-badge.is-danger {
+    @apply border-red-200 bg-red-50 text-red-700;
+  }
+
+  .admin-setting-prohibited-word {
+    @apply flex flex-col gap-6;
+  }
+
+  .admin-setting-prohibited-word > .admin-page-desc-wrap {
+    @apply mb-0;
+  }
+
+  .admin-setting-prohibited-word-grid {
+    @apply grid grid-cols-1 gap-6 xl:grid-cols-[minmax(420px,0.78fr)_minmax(0,1.42fr)];
+  }
+
+  .admin-setting-prohibited-word-section {
+    @apply overflow-hidden;
+  }
+
+  .admin-setting-prohibited-word-form {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-prohibited-word-body {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-prohibited-word-control {
+    @apply flex min-w-0 w-full items-center;
+  }
+
+  .admin-setting-prohibited-word-control.is-stacked {
+    @apply flex-col items-stretch gap-2;
+  }
+
+  .admin-setting-prohibited-word-control textarea.admin-input {
+    @apply h-auto min-h-24 w-full resize-y;
+  }
+
+  .admin-setting-prohibited-word-word-input {
+    @apply min-h-32;
+  }
+
+
+  .admin-setting-prohibited-word-checks {
+    @apply flex flex-wrap items-center gap-5;
+  }
+
+  .admin-setting-prohibited-word-actions {
+    @apply flex justify-end gap-3 border-t px-6 py-4;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-prohibited-word-search {
+    @apply flex flex-col gap-3 border-b px-6 py-4 md:flex-row md:items-center md:justify-between;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-prohibited-word-search-field {
+    @apply flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center;
+  }
+
+  .admin-setting-prohibited-word-search-field .admin-form-label {
+    @apply w-auto shrink-0 bg-transparent p-0 pr-4 text-[13px];
+  }
+
+  .admin-setting-prohibited-word-search-field .admin-input {
+    @apply w-full md:max-w-80;
+  }
+
+  .admin-setting-prohibited-word-search-actions {
+    @apply flex flex-wrap justify-end gap-2;
+  }
+
+  .admin-setting-prohibited-word-search-button {
+    @apply h-9.5 px-4 py-2 text-[14px];
+  }
+
+  .admin-setting-prohibited-word-table-wrap {
+    @apply overflow-x-auto pb-px;
+  }
+
+  .admin-setting-prohibited-word-table {
+    @apply min-w-full w-full table-auto border-collapse text-[13px];
+  }
+
+  .admin-setting-prohibited-word-table th {
+    @apply whitespace-nowrap border-b bg-slate-50 px-3 py-3 text-center font-semibold text-slate-700;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-prohibited-word-table td {
+    @apply border-b px-3 py-3 text-center align-middle text-slate-700 whitespace-nowrap;
+    border-color: $admin-hairline;
+    line-height: 1.3;
+  }
+
+  .admin-setting-prohibited-word-table .admin-status-badge {
+    @apply inline-flex items-center justify-center whitespace-nowrap align-middle leading-none;
+  }
+
+  .admin-setting-prohibited-word-table td:nth-child(2) strong {
+    @apply inline-block align-middle leading-none;
+  }
+
+  .admin-setting-prohibited-word-table td:nth-child(6) {
+    @apply whitespace-normal break-words;
+  }
+
+  .admin-setting-prohibited-word-table th.is-center,
+  .admin-setting-prohibited-word-table td.is-center {
+    @apply whitespace-nowrap text-center;
+  }
+
+  .admin-setting-prohibited-word-table td:nth-child(2) {
+    @apply text-left;
+  }
+
+  .admin-setting-prohibited-word-row-actions {
+    @apply flex flex-wrap justify-center gap-2;
+  }
+
+  .admin-setting-prohibited-word-row-actions .admin-btn-secondary {
+    @apply h-8 items-center px-3 py-1 text-[13px] leading-none;
+  }
+
+  .admin-setting-prohibited-word-row-actions .admin-btn-secondary.is-danger {
+    @apply border-red-200 bg-red-50 text-red-600 hover:bg-red-100;
+  }
+
+  .admin-setting-prohibited-word-empty {
+    @apply h-44 p-0 text-center text-[13px] text-slate-500;
+  }
+
+  .admin-setting-prohibited-word-empty-inner {
+    @apply flex min-h-44 flex-col items-center justify-center gap-2;
+  }
+
+  .admin-setting-prohibited-word-empty-icon {
+    @apply h-10 w-10 text-slate-200;
+    stroke-width: 1.5;
+  }
+
   .admin-goods-register {
     @apply flex flex-col gap-6;
   }
@@ -3743,5 +3944,121 @@ $admin-tile: #272729;
     .admin-goods-register-stock-wrapper .admin-goods-register-unit-input {
       @apply w-full;
     }
+  }
+  .admin-setting-goods-origin {
+    @apply space-y-4;
+  }
+
+  .admin-setting-goods-origin > .admin-page-desc-wrap {
+    @apply mb-4;
+  }
+
+
+  .admin-setting-goods-origin-transfer-section {
+    @apply overflow-visible;
+  }
+
+  .admin-setting-goods-origin-transfer-body {
+    @apply flex flex-wrap items-center gap-3 px-6 py-5;
+  }
+
+  .admin-setting-goods-origin-download-form,
+  .admin-setting-goods-origin-upload-form {
+    @apply flex min-w-0 items-center gap-2;
+  }
+
+  .admin-setting-goods-origin-upload-form {
+    @apply flex-1;
+  }
+
+  .admin-setting-goods-origin-upload-control {
+    @apply min-w-0 flex-1;
+  }
+
+  .admin-setting-goods-origin-upload-input {
+    @apply sr-only;
+  }
+
+  .admin-setting-goods-origin-upload-name {
+    @apply flex h-10 w-full cursor-pointer items-center truncate;
+  }
+
+  .admin-setting-goods-origin-transfer-help {
+    @apply px-6 pb-5;
+  }
+
+  .admin-setting-goods-origin-upload-button {
+    @apply h-9.5 shrink-0 whitespace-nowrap px-4 py-2;
+  }
+
+  .admin-setting-goods-origin-upload-button .admin-btn-icon {
+    @apply h-4 w-4 shrink-0;
+  }
+
+  @media (max-width: 767px) {
+    .admin-setting-goods-origin-transfer-body,
+    .admin-setting-goods-origin-download-form,
+    .admin-setting-goods-origin-upload-form {
+      @apply w-full flex-col items-stretch;
+    }
+
+    .admin-setting-goods-origin-upload-button,
+    .admin-setting-goods-origin-download-button {
+      @apply w-full justify-center;
+    }
+  }
+
+  .admin-setting-goods-origin-section {
+    @apply overflow-visible;
+  }
+
+  .admin-setting-goods-origin-form {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-goods-origin-body {
+    @apply flex flex-col;
+  }
+
+  .admin-setting-goods-origin-control {
+    @apply flex min-w-0 flex-1 items-center gap-2;
+  }
+
+  .admin-setting-goods-origin-control.is-stacked {
+    @apply flex-col items-start;
+  }
+
+  .admin-setting-goods-origin-control .admin-input {
+    @apply w-full;
+  }
+
+  .admin-setting-goods-origin-control .admin-goods-register-help {
+    @apply mt-1;
+  }
+
+  .admin-setting-goods-origin-sort-control .admin-input {
+    @apply w-40 text-right;
+  }
+
+  .admin-setting-goods-origin-actions {
+    @apply flex justify-end gap-2 border-t px-6 py-4;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-goods-origin-search {
+    @apply mb-0;
+  }
+
+  .admin-setting-goods-origin-delete {
+    @apply ml-2 h-8 px-3 py-1 text-[13px] leading-none;
+  }
+
+  .admin-setting-goods-origin-picker .admin-goods-register-category-head,
+  .admin-setting-goods-origin-picker .admin-goods-register-category-cols {
+    @apply grid-cols-3;
+  }
+
+  .admin-setting-goods-origin-none {
+    @apply text-slate-500;
   }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Admin\Goods\Register;
 
+use App\Lib\GoodsLib;
+use App\Repositories\Admin\RestrictedWordRepository;
 use App\Repositories\Common\UploadRepository;
 use App\Services\Admin\Setting\Goods\Register\GoodsRegisterSetting;
 use App\Services\BaseService;
@@ -132,6 +134,8 @@ class PostService extends BaseService
       return $this->fail('상품명은 255자 이하로 입력해 주세요.', 'name');
     }
 
+    $manufacturer = trim((string) ($data['manufacturer'] ?? ''));
+
     $originResult = $this->normalizeOrigin($data);
     if (($originResult['success'] ?? false) !== true) {
       return $originResult;
@@ -156,6 +160,11 @@ class PostService extends BaseService
     $keywordsResult = $this->normalizeKeywords($data);
     if (($keywordsResult['success'] ?? false) !== true) {
       return $keywordsResult;
+    }
+
+    $restrictedWordResult = $this->validateRestrictedWords($name, $manufacturer, (string) $keywordsResult['value']);
+    if (($restrictedWordResult['success'] ?? false) !== true) {
+      return $restrictedWordResult;
     }
 
     $taxTypeResult = $this->normalizeEnum($data, 'tax_type', self::TAX_TYPES, '과세여부를 올바르게 선택해 주세요.', 'tax_type');
@@ -273,7 +282,7 @@ class PostService extends BaseService
       'category_id' => $categoryId,
       'category_path' => (string) ($category['path'] ?? ''),
       'origin' => $origin,
-      'manufacturer' => $this->nullableString($data, 'manufacturer', 100),
+      'manufacturer' => $manufacturer === '' ? null : mb_substr($manufacturer, 0, 100),
       'brand' => $this->nullableString($data, 'brand', 100),
       'name' => $name,
       'invoice_name' => $this->nullableString($data, 'invoice_name', 255),
@@ -439,6 +448,29 @@ class PostService extends BaseService
     }
 
     return ['success' => true, 'value' => implode(',', array_unique($items))];
+  }
+
+  /**
+   * 상품명, 제조사, 검색 키워드의 금지단어 포함 여부를 검증합니다.
+   *
+   * @param string $name 상품명
+   * @param string $manufacturer 제조사
+   * @param string $keywords 검색 키워드
+   *
+   * @return array
+   */
+  private function validateRestrictedWords(string $name, string $manufacturer, string $keywords): array
+  {
+    $repository = $this->container->get(RestrictedWordRepository::class);
+    $goodsLib = $this->container->get(GoodsLib::class);
+    $violation = $goodsLib->findRestrictedWordViolation($name, $manufacturer, $keywords, $repository->getActiveRestrictedWords());
+    if ($violation !== null) {
+      $violation['status'] = 400;
+
+      return $violation;
+    }
+
+    return ['success' => true];
   }
 
   /**

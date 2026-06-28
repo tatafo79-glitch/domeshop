@@ -1,0 +1,135 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}상품 원산지{% endblock %}
+
+{% block contents %}
+<section class="admin-setting-goods-origin">
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">상품 등록에서 선택하는 원산지를 단계별로 선택하고 등록 또는 수정합니다.</p>
+  </div>
+
+  <script type="application/json" id="goodsOriginSettingData">{{ origins|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
+
+  <section class="admin-card admin-goods-register-section admin-setting-goods-origin-picker-section">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">원산지 선택</h3>
+    </div>
+    <div class="admin-goods-register-form-body">
+      <div class="admin-form-row">
+        <label class="admin-form-label" for="originSearchInput">원산지 검색</label>
+        <div class="admin-form-content admin-goods-register-control is-stacked">
+          <div class="admin-goods-register-category-search admin-setting-goods-origin-search">
+            <svg class="admin-goods-register-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input id="originSearchInput" type="text" class="admin-input" autocomplete="off" placeholder="원산지명을 입력하세요. 공백으로 단어를 구분하면 결과 내 재검색이 가능합니다.">
+            <div id="originSearchResultLayer" class="admin-goods-register-category-results" hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-row">
+        <span class="admin-form-label">원산지 선택</span>
+        <div class="admin-form-content admin-goods-register-category-content">
+          <div class="admin-goods-register-selected-category">
+            <svg class="admin-goods-register-selected-category-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            <span>선택된 원산지 :</span>
+            <strong id="selectedOriginText">원산지 선택 안함</strong>
+            <button type="button" class="admin-btn-secondary is-danger admin-setting-goods-origin-delete" data-goods-origin-delete hidden>삭제</button>
+          </div>
+          <div class="admin-goods-register-category-picker admin-setting-goods-origin-picker">
+            <div class="admin-goods-register-category-head admin-setting-goods-origin-head">
+              <div>1단 원산지</div>
+              <div>2단 원산지</div>
+              <div>3단 원산지</div>
+            </div>
+            <div class="admin-goods-register-category-cols admin-setting-goods-origin-cols">
+              <div id="originList1" class="admin-goods-register-category-col" data-origin-depth="1"></div>
+              <div id="originList2" class="admin-goods-register-category-col" data-origin-depth="2"></div>
+              <div id="originList3" class="admin-goods-register-category-col" data-origin-depth="3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-card admin-setting-goods-origin-section">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title" data-goods-origin-form-title>원산지 등록 수정</h3>
+    </div>
+    <form id="goodsOriginForm" class="admin-setting-goods-origin-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/origin" data-create-action="/{{ setting.site.admin_directory }}/setting/goods/origin" novalidate>
+      <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+      <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+      <input type="hidden" name="id" value="">
+      <input type="hidden" id="level" name="level" value="0">
+      <input type="hidden" id="parent_depth1" name="parent_depth1" value="">
+      <input type="hidden" id="parent_depth2" name="parent_depth2" value="">
+      <div class="admin-setting-goods-origin-body">
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="origin_name">원산지명<span class="admin-required-mark" aria-hidden="true">*</span></label>
+          <div class="admin-form-content admin-setting-goods-origin-control is-stacked">
+            <input id="origin_name" name="origin_name" type="text" class="admin-input" maxlength="50" placeholder="예: 국내, 경기도, 수원시">
+            <p class="admin-goods-register-help" data-goods-origin-form-guide>※ 선택 없음 상태에서 등록하면 1단 원산지로 등록됩니다.</p>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="sort">정렬 순서</label>
+          <div class="admin-form-content admin-setting-goods-origin-sort-control">
+            <input id="sort" name="sort" type="text" inputmode="numeric" class="admin-input" value="0" placeholder="낮을수록 먼저 노출" title="0 이상의 숫자로 입력해 주세요.">
+          </div>
+        </div>
+      </div>
+      <div class="admin-setting-goods-origin-actions">
+        <button type="reset" class="admin-btn-secondary" data-goods-origin-reset>초기화</button>
+        <button type="submit" class="admin-btn-primary is-success" data-goods-origin-action="update" data-goods-origin-update hidden>수정</button>
+        <button type="submit" class="admin-btn-primary" data-goods-origin-action="create" data-goods-origin-create>등록</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="admin-card admin-setting-goods-origin-transfer-section">
+    <div class="admin-card-header">
+      <h3 class="admin-card-title">원산지 일괄 관리</h3>
+    </div>
+    <div class="admin-setting-goods-origin-transfer-body">
+      <form id="goodsOriginDownloadForm" class="admin-setting-goods-origin-download-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/origin/download">
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <button type="submit" class="admin-btn-excel admin-setting-goods-origin-download-button">
+          <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5l5 5v11a2 2 0 01-2 2z"></path>
+          </svg>
+          다운로드
+        </button>
+      </form>
+      <form id="goodsOriginTemplateDownloadForm" class="admin-setting-goods-origin-download-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/origin/template-download">
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <button type="submit" class="admin-btn-excel admin-setting-goods-origin-download-button">
+          <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v10m0 0l-3-3m3 3l3-3M4 20h16"></path>
+          </svg>
+          엑셀 양식 다운로드
+        </button>
+      </form>
+      <form id="goodsOriginUploadForm" class="admin-setting-goods-origin-upload-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/origin/upload" enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <label class="admin-setting-goods-origin-upload-control" for="goodsOriginUploadFile">
+          <input id="goodsOriginUploadFile" name="origin_file" type="file" accept=".csv,text/csv" class="admin-setting-goods-origin-upload-input">
+          <span class="admin-input admin-setting-goods-origin-upload-name" data-goods-origin-upload-name>CSV 파일을 선택해 주세요.</span>
+        </label>
+        <button type="submit" class="admin-btn-primary admin-setting-goods-origin-upload-button" data-goods-origin-upload-submit>
+          <svg class="admin-btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16V6m0 0l-3 3m3-3l3 3M4 20h16"></path>
+          </svg>
+          업로드
+        </button>
+      </form>
+    </div>
+    <p class="admin-goods-register-help admin-setting-goods-origin-transfer-help">※ 다운로드한 CSV에서 ID가 있으면 수정, ID가 없으면 1단/2단/3단 원산지명 기준으로 등록됩니다.</p>
+  </section>
+</section>
+{% endblock %}
+
+{% block appScript %}
+<script type="module" src="/dist/basic/js/admin/setting/goods_origin.js"></script>
+{% endblock %}

@@ -1124,6 +1124,68 @@ if (document.readyState === 'loading') {
 } else {
   initAdminGoodsRegisterSettingForm();
 }
+const ADMIN_MOBILE_COLLAPSIBLE_QUERY = '(max-width: 767px)';
+
+const setAdminMobileCollapsibleCardExpanded = (card: HTMLElement, isExpanded: boolean): void => {
+  card.classList.toggle('is-collapsed', !isExpanded);
+  const trigger = card.querySelector<HTMLButtonElement>('[data-admin-mobile-collapsible-trigger]');
+  if (trigger) {
+    trigger.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  }
+};
+
+const expandAdminMobileCollapsibleCard = (element: HTMLElement): void => {
+  const card = element.closest<HTMLElement>('[data-admin-mobile-collapsible-card]');
+  if (card) {
+    setAdminMobileCollapsibleCardExpanded(card, true);
+  }
+};
+
+const initAdminMobileCollapsibleCards = (): void => {
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-admin-mobile-collapsible-card]'));
+  if (cards.length === 0) {
+    return;
+  }
+
+  const mediaQuery = window.matchMedia(ADMIN_MOBILE_COLLAPSIBLE_QUERY);
+  const isAlwaysCollapsible = (card: HTMLElement): boolean => card.dataset.adminCollapsibleMode === 'all';
+  const canToggle = (card: HTMLElement): boolean => isAlwaysCollapsible(card) || mediaQuery.matches;
+
+  cards.forEach((card: HTMLElement): void => {
+    const trigger = card.querySelector<HTMLButtonElement>('[data-admin-mobile-collapsible-trigger]');
+    if (!trigger) {
+      return;
+    }
+
+    trigger.addEventListener('click', (event: MouseEvent): void => {
+      if (!canToggle(card)) {
+        return;
+      }
+
+      event.preventDefault();
+      setAdminMobileCollapsibleCardExpanded(card, card.classList.contains('is-collapsed'));
+    });
+  });
+
+  const syncDesktopState = (): void => {
+    if (mediaQuery.matches) {
+      return;
+    }
+
+    cards
+      .filter((card: HTMLElement): boolean => !isAlwaysCollapsible(card))
+      .forEach((card: HTMLElement): void => setAdminMobileCollapsibleCardExpanded(card, true));
+  };
+
+  mediaQuery.addEventListener('change', syncDesktopState);
+  syncDesktopState();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminMobileCollapsibleCards);
+} else {
+  initAdminMobileCollapsibleCards();
+}
 interface AdminPlatformFeeResponse {
   success: boolean;
   message?: string;
@@ -1332,6 +1394,7 @@ const setAdminPlatformFeeEditMode = (form: HTMLFormElement, data: AdminPlatformF
     submit.textContent = '수정';
   }
 
+  expandAdminMobileCollapsibleCard(form);
   form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   window.setTimeout((): void => getAdminPlatformFeeInput(form, 'platform_name')?.focus(), 180);
 };
@@ -1459,4 +1522,334 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initAdminPlatformFeeSetting);
 } else {
   initAdminPlatformFeeSetting();
+}
+
+interface AdminProhibitedWordResponse {
+  success: boolean;
+  message?: string;
+  field?: string;
+}
+
+type AdminProhibitedWordWordField = HTMLInputElement | HTMLTextAreaElement;
+
+const ADMIN_PROHIBITED_WORD_BATCH_LIMIT = 1000;
+
+interface AdminProhibitedWordEditData {
+  id: string;
+  wordType: string;
+  word: string;
+  targetScope: string;
+  matchType: string;
+  isActive: string;
+  memo: string;
+}
+
+const getAdminProhibitedWordInput = (form: HTMLFormElement, name: string): HTMLInputElement | null => {
+  return form.querySelector<HTMLInputElement>(`[name="${name}"]`);
+};
+
+const getAdminProhibitedWordSelect = (form: HTMLFormElement, name: string): HTMLSelectElement | null => {
+  return form.querySelector<HTMLSelectElement>(`[name="${name}"]`);
+};
+
+const getAdminProhibitedWordTextarea = (form: HTMLFormElement, name: string): HTMLTextAreaElement | null => {
+  return form.querySelector<HTMLTextAreaElement>(`[name="${name}"]`);
+};
+
+const getAdminProhibitedWordWordField = (form: HTMLFormElement): AdminProhibitedWordWordField | null => {
+  return form.querySelector<AdminProhibitedWordWordField>('[name="word"]');
+};
+
+const splitAdminProhibitedWords = (wordText: string): string[] => {
+  return wordText
+    .split(/[,，\r\n]+/)
+    .map((word: string): string => word.trim())
+    .filter((word: string): boolean => word !== '');
+};
+
+const focusAdminProhibitedWordField = (form: HTMLFormElement, fieldName: string | undefined): void => {
+  if (!fieldName) {
+    return;
+  }
+
+  const field = Array.from(form.elements).find((control: Element): boolean => {
+    return control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement
+      ? control.name === fieldName || control.id === fieldName
+      : false;
+  });
+
+  if (!(field instanceof HTMLElement)) {
+    return;
+  }
+
+  field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout((): void => field.focus(), 180);
+};
+
+const createAdminProhibitedWordFormData = (form: HTMLFormElement): FormData => {
+  const formData = new FormData(form);
+  if (!getAdminProhibitedWordInput(form, 'is_active')?.checked) {
+    formData.set('is_active', 'N');
+  }
+
+  return formData;
+};
+
+const createAdminProhibitedWordDeleteFormData = (form: HTMLFormElement): FormData => {
+  const formData = new FormData();
+  form.querySelectorAll<HTMLInputElement>('input[type="hidden"][name]').forEach((input: HTMLInputElement): void => {
+    if (input.name !== 'id') {
+      formData.set(input.name, input.value);
+    }
+  });
+
+  return formData;
+};
+
+const validateAdminProhibitedWordForm = (form: HTMLFormElement): { message: string; field: string } | null => {
+  const wordType = getAdminProhibitedWordSelect(form, 'word_type')?.value ?? '';
+  if (!['PROHIBITED', 'ADULT'].includes(wordType)) {
+    return { message: '단어 유형을 올바르게 선택해 주세요.', field: 'word_type' };
+  }
+
+  const wordText = getAdminProhibitedWordWordField(form)?.value.trim() ?? '';
+  const words = splitAdminProhibitedWords(wordText);
+  if (wordText === '') {
+    return { message: '단어를 입력해 주세요.', field: 'word' };
+  }
+  if (words.length < 1) {
+    return { message: '검사 가능한 단어를 입력해 주세요.', field: 'word' };
+  }
+  if (words.length > ADMIN_PROHIBITED_WORD_BATCH_LIMIT) {
+    return { message: `한 번에 등록할 단어는 ${ADMIN_PROHIBITED_WORD_BATCH_LIMIT}개 이하로 입력해 주세요.`, field: 'word' };
+  }
+  if (words.some((word: string): boolean => word.length > 100)) {
+    return { message: '각 단어는 100자 이하로 입력해 주세요.', field: 'word' };
+  }
+
+  const targetScope = getAdminProhibitedWordSelect(form, 'target_scope')?.value ?? '';
+  if (!['NAME', 'MANUFACTURER', 'KEYWORD', 'NAME_KEYWORD', 'BOTH'].includes(targetScope)) {
+    return { message: '검사 대상을 올바르게 선택해 주세요.', field: 'target_scope' };
+  }
+
+  const matchType = getAdminProhibitedWordSelect(form, 'match_type')?.value ?? '';
+  if (!['CONTAINS', 'EXACT', 'WORD'].includes(matchType)) {
+    return { message: '매칭 방식을 올바르게 선택해 주세요.', field: 'match_type' };
+  }
+
+
+  const memo = getAdminProhibitedWordTextarea(form, 'memo')?.value.trim() ?? '';
+  if (memo.length > 255) {
+    return { message: '메모는 255자 이하로 입력해 주세요.', field: 'memo' };
+  }
+
+  return null;
+};
+
+const setAdminProhibitedWordCreateMode = (form: HTMLFormElement): void => {
+  const createAction = form.dataset.createAction ?? form.action;
+  form.action = createAction;
+
+  const id = getAdminProhibitedWordInput(form, 'id');
+  if (id) {
+    id.value = '';
+  }
+
+  const word = getAdminProhibitedWordWordField(form);
+  if (word) {
+    word.value = '';
+  }
+
+
+  const isActive = getAdminProhibitedWordInput(form, 'is_active');
+  if (isActive) {
+    isActive.checked = true;
+  }
+
+  const memo = getAdminProhibitedWordTextarea(form, 'memo');
+  if (memo) {
+    memo.value = '';
+  }
+
+  const wordType = getAdminProhibitedWordSelect(form, 'word_type');
+  if (wordType) {
+    wordType.value = 'PROHIBITED';
+  }
+
+  const targetScope = getAdminProhibitedWordSelect(form, 'target_scope');
+  if (targetScope) {
+    targetScope.value = 'BOTH';
+  }
+
+  const matchType = getAdminProhibitedWordSelect(form, 'match_type');
+  if (matchType) {
+    matchType.value = 'CONTAINS';
+  }
+
+  const title = document.querySelector<HTMLElement>('[data-prohibited-word-form-title]');
+  if (title) {
+    title.textContent = '금지단어 등록';
+  }
+
+  const submit = form.querySelector<HTMLButtonElement>('[data-prohibited-word-submit]');
+  if (submit) {
+    submit.textContent = '등록';
+  }
+};
+
+const setAdminProhibitedWordEditMode = (form: HTMLFormElement, data: AdminProhibitedWordEditData): void => {
+  const createAction = form.dataset.createAction ?? form.action;
+  form.action = `${createAction}/${data.id}`;
+
+  getAdminProhibitedWordInput(form, 'id')!.value = data.id;
+  getAdminProhibitedWordWordField(form)!.value = data.word;
+  getAdminProhibitedWordSelect(form, 'word_type')!.value = data.wordType;
+  getAdminProhibitedWordSelect(form, 'target_scope')!.value = data.targetScope;
+  getAdminProhibitedWordSelect(form, 'match_type')!.value = data.matchType;
+  getAdminProhibitedWordInput(form, 'is_active')!.checked = data.isActive === 'Y';
+  getAdminProhibitedWordTextarea(form, 'memo')!.value = data.memo;
+
+  const title = document.querySelector<HTMLElement>('[data-prohibited-word-form-title]');
+  if (title) {
+    title.textContent = '금지단어 수정';
+  }
+
+  const submit = form.querySelector<HTMLButtonElement>('[data-prohibited-word-submit]');
+  if (submit) {
+    submit.textContent = '수정';
+  }
+
+  expandAdminMobileCollapsibleCard(form);
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.setTimeout((): void => getAdminProhibitedWordWordField(form)?.focus(), 180);
+};
+
+const initAdminProhibitedWordSetting = (): void => {
+  const form = document.querySelector<HTMLFormElement>('#prohibitedWordForm');
+  if (!form) {
+    return;
+  }
+
+  const submitButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('button[type="submit"]'));
+  const setSubmitting = (isSubmitting: boolean): void => {
+    submitButtons.forEach((button: HTMLButtonElement): void => {
+      button.disabled = isSubmitting;
+    });
+  };
+
+  form.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
+    event.preventDefault();
+
+    if (!window.axios) {
+      await window.uiAlert?.('요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+      return;
+    }
+
+    const validation = validateAdminProhibitedWordForm(form);
+    if (validation) {
+      await window.uiAlert?.(validation.message);
+      focusAdminProhibitedWordField(form, validation.field);
+      return;
+    }
+
+    const wordText = getAdminProhibitedWordWordField(form)?.value.trim() ?? '';
+    if ((getAdminProhibitedWordInput(form, 'id')?.value ?? '') !== '' && splitAdminProhibitedWords(wordText).length > 1) {
+      setAdminProhibitedWordCreateMode(form);
+      const wordField = getAdminProhibitedWordWordField(form);
+      if (wordField) {
+        wordField.value = wordText;
+      }
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await window.axios.post<AdminProhibitedWordResponse>(form.action, createAdminProhibitedWordFormData(form), {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+
+      await window.uiAlert?.(response.data.message ?? '금지단어가 저장되었습니다.');
+      window.location.reload();
+    } catch (error: unknown) {
+      if (window.axios.isAxiosError<AdminProhibitedWordResponse>(error)) {
+        const payload = error.response?.data;
+        await window.uiAlert?.(payload?.message ?? '금지단어를 저장하지 못했습니다.');
+        focusAdminProhibitedWordField(form, payload?.field);
+        return;
+      }
+
+      await window.uiAlert?.('금지단어를 저장하지 못했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  form.addEventListener('reset', (event: Event): void => {
+    event.preventDefault();
+    setAdminProhibitedWordCreateMode(form);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-prohibited-word-edit]').forEach((button: HTMLButtonElement): void => {
+    button.addEventListener('click', (): void => {
+      setAdminProhibitedWordEditMode(form, {
+        id: button.dataset.id ?? '',
+        wordType: button.dataset.wordType ?? 'PROHIBITED',
+        word: button.dataset.word ?? '',
+        targetScope: button.dataset.targetScope ?? 'BOTH',
+        matchType: button.dataset.matchType ?? 'CONTAINS',
+        isActive: button.dataset.isActive ?? 'Y',
+        memo: button.dataset.memo ?? '',
+      });
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-prohibited-word-delete]').forEach((button: HTMLButtonElement): void => {
+    button.addEventListener('click', async (): Promise<void> => {
+      if (!window.axios) {
+        await window.uiAlert?.('요청을 처리할 수 없습니다. 새로고침 후 다시 시도해 주세요.');
+        return;
+      }
+
+      const confirmed = await window.uiConfirm?.('금지단어를 삭제하시겠습니까?', '확인');
+      if (confirmed !== true) {
+        return;
+      }
+
+      const deleteUrl = button.dataset.deleteUrl ?? '';
+      if (deleteUrl === '') {
+        await window.uiAlert?.('삭제 요청 주소가 올바르지 않습니다. 목록에서 다시 선택해 주세요.');
+        return;
+      }
+
+      button.disabled = true;
+      try {
+        const response = await window.axios.post<AdminProhibitedWordResponse>(deleteUrl, createAdminProhibitedWordDeleteFormData(form), {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+
+        await window.uiAlert?.(response.data.message ?? '금지단어가 삭제되었습니다.');
+        window.location.reload();
+      } catch (error: unknown) {
+        if (window.axios.isAxiosError<AdminProhibitedWordResponse>(error)) {
+          await window.uiAlert?.(error.response?.data?.message ?? '금지단어를 삭제하지 못했습니다.');
+          return;
+        }
+
+        await window.uiAlert?.('금지단어를 삭제하지 못했습니다.');
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminProhibitedWordSetting);
+} else {
+  initAdminProhibitedWordSetting();
 }

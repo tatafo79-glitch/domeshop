@@ -13,11 +13,18 @@
     <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
     <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
 
-    <section class="admin-card admin-setting-goods-register-section">
+    <section class="admin-card admin-setting-goods-register-section" data-admin-mobile-collapsible-card>
       <div class="admin-card-header">
-        <h3 class="admin-card-title">판매가 산정설정</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>판매가 산정설정</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-setting-goods-register-body">
+      <div class="admin-setting-goods-register-body" data-admin-collapsible-content>
         <div class="admin-form-row admin-setting-goods-register-two-col-row">
           <div class="admin-setting-goods-register-half-row">
             <span class="admin-form-label">기본 산정방식</span>
@@ -75,11 +82,18 @@
       </div>
     </section>
 
-    <section class="admin-card admin-setting-goods-register-section">
+    <section class="admin-card admin-setting-goods-register-section" data-admin-mobile-collapsible-card>
       <div class="admin-card-header">
-        <h3 class="admin-card-title">등록 제한</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>등록 제한</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-setting-goods-register-body">
+      <div class="admin-setting-goods-register-body" data-admin-collapsible-content>
         <div class="admin-setting-goods-register-three-col-row">
           <label class="admin-setting-goods-register-field" for="max_image_count">
             <span>이미지 등록 수</span>
@@ -96,11 +110,18 @@
         </div>
       </div>
     </section>
-    <section class="admin-card admin-setting-goods-register-section">
+    <section class="admin-card admin-setting-goods-register-section" data-admin-mobile-collapsible-card>
       <div class="admin-card-header">
-        <h3 class="admin-card-title">배송 기본값</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>배송 기본값</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-form-body">
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <span class="admin-form-label">배송 정책</span>
           <div class="admin-form-content admin-goods-register-control">

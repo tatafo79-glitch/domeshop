@@ -342,15 +342,42 @@ const getFlagValue = (fieldName: string): string => {
   return hiddenInput?.value ?? '';
 };
 
+const getFocusableField = (fieldName: string): HTMLElement | null => {
+  const fieldById = form?.querySelector<HTMLElement>(`#${fieldName}`) ?? null;
+  if (fieldById && !(fieldById instanceof HTMLInputElement && fieldById.type === 'hidden')) {
+    return fieldById;
+  }
+
+  const fieldsByName = Array.from(form?.querySelectorAll<HTMLElement>(`[name="${fieldName}"]`) ?? []);
+
+  return fieldsByName.find((field: HTMLElement): boolean => {
+    return !(field instanceof HTMLInputElement && field.type === 'hidden') && !field.hasAttribute('disabled');
+  }) ?? fieldById;
+};
+
+const expandCollapsedCardForField = (field: HTMLElement): void => {
+  const card = field.closest<HTMLElement>('[data-admin-mobile-collapsible-card]');
+  if (!card || !card.classList.contains('is-collapsed')) {
+    return;
+  }
+
+  card.classList.remove('is-collapsed');
+  const trigger = card.querySelector<HTMLButtonElement>('[data-admin-mobile-collapsible-trigger]');
+  trigger?.setAttribute('aria-expanded', 'true');
+};
+
 const focusField = (fieldName: string): void => {
-  const field = form?.querySelector<HTMLElement>(`#${fieldName}, [name="${fieldName}"]`);
+  const field = getFocusableField(fieldName);
 
   if (!field) {
     return;
   }
 
-  field.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  window.setTimeout((): void => field.focus(), 180);
+  expandCollapsedCardForField(field);
+  window.requestAnimationFrame((): void => {
+    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout((): void => field.focus(), 180);
+  });
 };
 
 const validateNumber = (fieldName: string, label: string, min = 0): ValidationResult | null => {
@@ -404,6 +431,43 @@ const validateOriginSelection = (): ValidationResult | null => {
   return null;
 };
 
+
+const validateRestrictedWordsBeforeSubmit = async (): Promise<ValidationResult | null> => {
+  if (!form || !window.axios) {
+    return null;
+  }
+
+  const formData = new FormData();
+  form.querySelectorAll<HTMLInputElement>('input[type="hidden"][name]').forEach((input: HTMLInputElement): void => {
+    if (input.name !== 'category_path') {
+      formData.set(input.name, input.value);
+    }
+  });
+  formData.set('name', getValue('name'));
+  formData.set('manufacturer', getValue('manufacturer'));
+  formData.set('search_keywords', getValue('search_keywords'));
+
+  try {
+    await window.axios.post<GoodsRegisterResponse>(`${form.action}/restricted-word-check`, formData, {
+      headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+  } catch (error: unknown) {
+    if (window.axios.isAxiosError<GoodsRegisterResponse>(error)) {
+      const payload = error.response?.data;
+      return {
+        message: payload?.message ?? '상품명, 제조사 또는 상품키워드에 등록 제한 단어가 포함되어 있습니다.',
+        field: payload?.field ?? 'name',
+      };
+    }
+
+    return { message: '금지단어 검사를 완료하지 못했습니다. 새로고침 후 다시 시도해 주세요.', field: 'name' };
+  }
+
+  return null;
+};
 
 const validateGoodsRegisterForm = (): ValidationResult | null => {
 
@@ -2120,6 +2184,14 @@ form?.addEventListener('submit', async (event: SubmitEvent): Promise<void> => {
   }
 
   setSubmitting(true);
+
+  const restrictedWordValidation = await validateRestrictedWordsBeforeSubmit();
+  if (restrictedWordValidation) {
+    await showMessage(restrictedWordValidation.message);
+    focusField(restrictedWordValidation.field);
+    setSubmitting(false);
+    return;
+  }
 
   try {
     const response = await window.axios.post<GoodsRegisterResponse>(form.action, createNormalizedFormData(), {

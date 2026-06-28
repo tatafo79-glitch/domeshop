@@ -1,0 +1,173 @@
+{% extends "outline/base.html" %}
+
+{% block pageTitle %}금지단어{% endblock %}
+
+{% block contents %}
+<section class="admin-setting-prohibited-word">
+  <div class="admin-page-desc-wrap">
+    <p class="admin-page-desc">상품 등록 시 상품명, 제조사, 상품키워드에 포함되면 등록을 차단할 금지어와 성인단어를 관리합니다.</p>
+  </div>
+
+  <div class="admin-setting-prohibited-word-grid">
+    <section class="admin-card admin-setting-prohibited-word-section" data-admin-mobile-collapsible-card>
+      <div class="admin-card-header">
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true" aria-controls="prohibitedWordForm">
+            <span data-prohibited-word-form-title>금지단어 등록</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
+      </div>
+      <form id="prohibitedWordForm" class="admin-setting-prohibited-word-form" data-admin-collapsible-content method="post" action="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word" data-create-action="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word" novalidate>
+        <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
+        <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
+        <input type="hidden" name="id" value="">
+        <div class="admin-setting-prohibited-word-body">
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="word_type">단어 유형<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-setting-prohibited-word-control">
+              <select id="word_type" name="word_type" class="admin-input">
+                <option value="PROHIBITED">금지어</option>
+                <option value="ADULT">성인단어</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="word">단어<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-setting-prohibited-word-control is-stacked">
+              <textarea id="word" name="word" class="admin-input admin-setting-prohibited-word-word-input" rows="5" placeholder="예: 샤넬, KC인증&#10;쉼표 또는 줄바꿈으로 여러 단어를 입력할 수 있습니다."></textarea>
+              <p class="admin-goods-register-help">※ 쉼표 또는 줄바꿈으로 여러 단어를 입력하면 한 번에 등록됩니다. 성인전용 상품 여부와 상관없이 금지어와 성인단어 모두 등록 시 차단됩니다.</p>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="target_scope">검사 대상<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-setting-prohibited-word-control">
+              <select id="target_scope" name="target_scope" class="admin-input">
+                <option value="BOTH">상품명 + 제조사 + 키워드</option>
+                <option value="NAME_KEYWORD" selected>상품명 + 키워드</option>
+                <option value="NAME">상품명</option>
+                <option value="MANUFACTURER">제조사</option>
+                <option value="KEYWORD">키워드</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="match_type">매칭 방식<span class="admin-required-mark" aria-hidden="true">*</span></label>
+            <div class="admin-form-content admin-setting-prohibited-word-control is-stacked">
+              <select id="match_type" name="match_type" class="admin-input">
+                <option value="CONTAINS">포함</option>
+                <option value="EXACT">정확히 일치</option>
+                <option value="WORD">단어 일치</option>
+              </select>
+              <p class="admin-goods-register-help">※ 포함: 금지어 "안전" 등록 시 "안전벨트" 차단 / 정확히 일치: 입력값 전체가 "안전"일 때만 차단 / 단어 일치: 키워드처럼 분리된 단어가 "안전"일 때 차단</p>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <span class="admin-form-label">사용 여부</span>
+            <div class="admin-form-content admin-setting-prohibited-word-checks">
+              <label class="admin-goods-register-check"><input type="checkbox" name="is_active" value="Y" checked><span>사용함</span></label>
+            </div>
+          </div>
+          <div class="admin-form-row">
+            <label class="admin-form-label" for="memo">메모</label>
+            <div class="admin-form-content admin-setting-prohibited-word-control">
+              <textarea id="memo" name="memo" class="admin-input" rows="3" maxlength="255" placeholder="운영 참고사항"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="admin-setting-prohibited-word-actions">
+          <button type="reset" class="admin-btn-secondary" data-prohibited-word-reset>초기화</button>
+          <button type="submit" class="admin-btn-primary" data-prohibited-word-submit>등록</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="admin-card admin-setting-prohibited-word-section">
+      <div class="admin-card-header">
+        <h3 class="admin-card-title">등록된 금지단어 <span class="admin-badge-count">{{ pagination.total|number_format }}</span></h3>
+      </div>
+      <form class="admin-setting-prohibited-word-search" method="get" action="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word">
+        <div class="admin-setting-prohibited-word-search-field">
+          <label class="admin-form-label" for="prohibitedWordKeyword">검색</label>
+          <input id="prohibitedWordKeyword" name="keyword" type="text" class="admin-input" value="{{ search.keyword }}" maxlength="100" placeholder="단어 또는 메모 검색">
+        </div>
+        <div class="admin-setting-prohibited-word-search-actions">
+          <button type="submit" class="admin-btn-primary admin-setting-prohibited-word-search-button">검색</button>
+        </div>
+      </form>
+      <div class="admin-setting-prohibited-word-table-wrap">
+        <table class="admin-setting-prohibited-word-table">
+          <thead>
+            <tr>
+              <th class="is-center">유형</th>
+              <th>단어</th>
+              <th class="is-center">검사 대상</th>
+              <th class="is-center">매칭</th>
+              <th class="is-center">사용</th>
+              <th>메모</th>
+              <th class="is-center">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in restricted_words %}
+              <tr data-prohibited-word-row="{{ item.id }}">
+                <td class="is-center">
+                  {% if item.word_type == 'ADULT' %}<span class="admin-status-badge is-warning">성인단어</span>{% else %}<span class="admin-status-badge is-danger">금지어</span>{% endif %}
+                </td>
+                <td><strong>{{ item.word }}</strong></td>
+                <td class="is-center">{% if item.target_scope == 'NAME' %}상품명{% elseif item.target_scope == 'MANUFACTURER' %}제조사{% elseif item.target_scope == 'KEYWORD' %}키워드{% elseif item.target_scope == 'NAME_KEYWORD' %}상품명+키워드{% else %}전체{% endif %}</td>
+                <td class="is-center">{% if item.match_type == 'EXACT' %}정확히 일치{% elseif item.match_type == 'WORD' %}단어 일치{% else %}포함{% endif %}</td>
+                <td class="is-center">{% if item.is_active == 'Y' %}<span class="admin-status-badge is-info">사용</span>{% else %}<span class="admin-status-badge">미사용</span>{% endif %}</td>
+                <td>{{ item.memo }}</td>
+                <td class="is-center">
+                  <div class="admin-setting-prohibited-word-row-actions">
+                    <button type="button" class="admin-btn-secondary" data-prohibited-word-edit data-id="{{ item.id }}" data-word-type="{{ item.word_type }}" data-word="{{ item.word }}" data-target-scope="{{ item.target_scope }}" data-match-type="{{ item.match_type }}" data-is-active="{{ item.is_active }}" data-memo="{{ item.memo }}">수정</button>
+                    <button type="button" class="admin-btn-secondary is-danger" data-prohibited-word-delete data-delete-url="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word/{{ item.id }}/delete">삭제</button>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="7" class="admin-setting-prohibited-word-empty">
+                  <div class="admin-setting-prohibited-word-empty-inner">
+                    <svg class="admin-setting-prohibited-word-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"></path>
+                      <path d="M9 12h6"></path>
+                    </svg>
+                    <span>{% if search.keyword != '' %}검색된 금지단어가 없습니다.{% else %}등록된 금지단어가 없습니다.{% endif %}</span>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="admin-pagination admin-setting-prohibited-word-pagination">
+          <nav class="admin-pagination-nav" aria-label="금지단어 페이지">
+            {% if pagination.has_prev %}
+              <a class="admin-pagination-prev" href="?keyword={{ search.keyword|url_encode }}&page={{ pagination.prev_page }}">이전</a>
+            {% else %}
+              <span class="admin-pagination-prev disabled">이전</span>
+            {% endif %}
+            <div class="admin-pagination-pages">
+              {% for page_no in pagination.pages %}
+                {% if page_no == pagination.page %}
+                  <span class="admin-pagination-page active">{{ page_no }}</span>
+                {% else %}
+                  <a class="admin-pagination-page" href="?keyword={{ search.keyword|url_encode }}&page={{ page_no }}">{{ page_no }}</a>
+                {% endif %}
+              {% endfor %}
+            </div>
+            {% if pagination.has_next %}
+              <a class="admin-pagination-next" href="?keyword={{ search.keyword|url_encode }}&page={{ pagination.next_page }}">다음</a>
+            {% else %}
+              <span class="admin-pagination-next disabled">다음</span>
+            {% endif %}
+          </nav>
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock %}

@@ -77,7 +77,7 @@
     <div class="admin-outline-nav-submenu">
       <div class="admin-outline-nav-subgroup" :class="settingBasicMenuOpen ? 'is-open' : ''">
         <button type="button" class="admin-outline-nav-submenu-link admin-outline-nav-submenu-toggle" @click="settingBasicMenuOpen = !settingBasicMenuOpen">
-          <span>기본</span>
+          <span>기본설정</span>
           <svg class="admin-outline-nav-submenu-arrow" :class="settingBasicMenuOpen ? 'is-open' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
@@ -91,7 +91,7 @@
       </div>
       <div class="admin-outline-nav-subgroup" :class="settingGoodsMenuOpen ? 'is-open' : ''">
         <button type="button" class="admin-outline-nav-submenu-link admin-outline-nav-submenu-toggle" @click="settingGoodsMenuOpen = !settingGoodsMenuOpen">
-          <span>상품</span>
+          <span>상품설정</span>
           <svg class="admin-outline-nav-submenu-arrow" :class="settingGoodsMenuOpen ? 'is-open' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
@@ -99,7 +99,7 @@
         <div class="admin-outline-nav-nested-submenu">
           <a href="/{{ setting.site.admin_directory }}/setting/goods/register" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/register') ? 'is-active' : ''">등록설정</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/platform-fee') ? 'is-active' : ''">플랫폼 수수료 설정</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/prohibited-keyword" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/prohibited-keyword') ? 'is-active' : ''">금지키워드</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/prohibited-word') ? 'is-active' : ''">금지단어</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/origin" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/origin') ? 'is-active' : ''">원산지</a>
           <a href="/{{ setting.site.admin_directory }}/setting/goods/notice" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/notice') ? 'is-active' : ''">상품정보고시</a>
         </div>

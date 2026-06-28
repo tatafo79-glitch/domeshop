@@ -9,11 +9,18 @@
   </div>
 
   <div class="admin-setting-platform-fee-grid">
-    <section class="admin-card admin-setting-platform-fee-section">
+    <section class="admin-card admin-setting-platform-fee-section" data-admin-mobile-collapsible-card>
       <div class="admin-card-header">
-        <h3 class="admin-card-title" data-platform-fee-form-title>플랫폼 등록</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true" aria-controls="platformFeeSettingForm">
+            <span data-platform-fee-form-title>플랫폼 등록</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <form id="platformFeeSettingForm" class="admin-setting-platform-fee-form" method="post" action="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" data-create-action="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" novalidate>
+      <form id="platformFeeSettingForm" class="admin-setting-platform-fee-form" data-admin-collapsible-content method="post" action="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" data-create-action="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" novalidate>
         <input type="hidden" name="{{ csrf.keys.name }}" value="{{ csrf.name }}">
         <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
         <input type="hidden" name="id" value="">
@@ -76,7 +83,7 @@
           <div class="admin-form-row">
             <label class="admin-form-label" for="memo">메모</label>
             <div class="admin-form-content admin-setting-platform-fee-control">
-              <textarea id="memo" name="memo" class="admin-textarea" rows="3" maxlength="255" placeholder="수수료 적용 기준이나 참고사항"></textarea>
+              <textarea id="memo" name="memo" class="admin-input" rows="3" maxlength="255" placeholder="수수료 적용 기준이나 참고사항"></textarea>
             </div>
           </div>
         </div>

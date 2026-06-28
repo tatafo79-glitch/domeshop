@@ -19,11 +19,18 @@
     <input type="hidden" name="{{ csrf.keys.value }}" value="{{ csrf.value }}">
     <input id="category_path" name="category_path" type="hidden" value="">
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">카테고리 검색 / 선택</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>카테고리 검색 / 선택</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-form-body">
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <label class="admin-form-label" for="categorySearchInput">카테고리 검색</label>
           <div class="admin-form-content admin-goods-register-control is-stacked">
@@ -65,10 +72,18 @@
       <script type="application/json" id="goodsOriginData">{{ origins|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
       <script type="application/json" id="goodsRegisterSettingData">{{ register_config|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_HEX_APOS') b-or constant('JSON_HEX_QUOT'))|raw }}</script>
     </section>
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">기본 정보</h3></div>
-      <div class="admin-goods-register-form-body">
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>기본 정보</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
+      </div>
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <label class="admin-form-label" for="name">상품명<span class="admin-required-mark" aria-hidden="true">*</span></label>
           <div class="admin-form-content admin-goods-register-control">
@@ -169,11 +184,18 @@
       </div>
     </section>
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">판매 가격 정보</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>판매 가격 정보</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-form-body">
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <span class="admin-form-label">과세여부</span>
           <div class="admin-form-content admin-goods-register-control">
@@ -215,11 +237,18 @@
       </div>
     </section>
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">재고 및 노출</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>재고 및 노출</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-form-body">
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <span class="admin-form-label">재고 연동</span>
           <div class="admin-form-content admin-goods-register-price-control">
@@ -252,11 +281,18 @@
       </div>
     </section>
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">이미지 정보<span class="admin-required-mark" aria-hidden="true">*</span></h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>이미지 정보<span class="admin-required-mark" aria-hidden="true">*</span></span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-image-body">
+      <div class="admin-goods-register-image-body" data-admin-collapsible-content>
         <div id="imageHiddenFields" class="admin-goods-register-hidden-fields">
           <input type="hidden" name="thumbnail_url" value="">
           {% if extra_image_count > 0 %}
@@ -378,11 +414,18 @@
         </div>
       </div>    </section>
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">배송비 정보</h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>배송비 정보</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-form-body">
+      <div class="admin-goods-register-form-body" data-admin-collapsible-content>
         <div class="admin-form-row">
           <span class="admin-form-label">배송 정책<span class="admin-required-mark" aria-hidden="true">*</span></span>
           <div class="admin-form-content admin-goods-register-control">
@@ -446,11 +489,18 @@
       </div>
     </section>
 
-    <section class="admin-card admin-goods-register-section">
+    <section class="admin-card admin-goods-register-section" data-admin-mobile-collapsible-card data-admin-collapsible-mode="all">
       <div class="admin-card-header">
-        <h3 class="admin-card-title">상품 상세 설명 <span class="admin-required-mark" aria-hidden="true">*</span></h3>
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>상품 상세 설명 <span class="admin-required-mark" aria-hidden="true">*</span></span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
       </div>
-      <div class="admin-goods-register-editor-wrap">
+      <div class="admin-goods-register-editor-wrap" data-admin-collapsible-content>
         <textarea id="content" name="content" class="admin-input admin-goods-register-editor" rows="12" placeholder="상품 상세 설명을 입력하세요."></textarea>
       </div>
     </section>
@@ -464,5 +514,5 @@
 {% endblock %}
 
 {% block appScript %}
-<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/register.js?v=21"></script>
+<script type="module" src="/dist/{{ setting.skin.name }}/js/admin/goods/register.js?v=24"></script>
 {% endblock %}
