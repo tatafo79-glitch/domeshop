@@ -1,4 +1,4 @@
-<nav class="admin-outline-nav" x-data="{ path: window.location.pathname, goodsMenuOpen: window.location.pathname.includes('/goods'), memberMenuOpen: window.location.pathname.includes('/member'), settingMenuOpen: window.location.pathname.includes('/setting'), settingBasicMenuOpen: window.location.pathname.includes('/setting/basic') || window.location.pathname.includes('/setting/group'), settingGoodsMenuOpen: window.location.pathname.includes('/setting/goods') }">
+<nav class="admin-outline-nav" x-data="{ path: window.location.pathname, goodsMenuOpen: window.location.pathname === '/{{ setting.site.admin_directory }}/goods' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/goods/'), memberMenuOpen: window.location.pathname === '/{{ setting.site.admin_directory }}/member' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/member/'), settingMenuOpen: window.location.pathname === '/{{ setting.site.admin_directory }}/setting' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/setting/'), settingBasicMenuOpen: window.location.pathname === '/{{ setting.site.admin_directory }}/setting/basic' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/setting/basic/') || window.location.pathname === '/{{ setting.site.admin_directory }}/setting/group' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/setting/group/'), settingGoodsMenuOpen: window.location.pathname === '/{{ setting.site.admin_directory }}/setting/goods' || window.location.pathname.startsWith('/{{ setting.site.admin_directory }}/setting/goods/') }">
   <a href="/{{ setting.site.admin_directory }}" class="admin-outline-nav-link" :class="(path === '/{{ setting.site.admin_directory }}' || path === '/{{ setting.site.admin_directory }}/') ? 'is-active' : ''">
     <svg class="admin-outline-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
@@ -17,13 +17,13 @@
       </svg>
     </button>
     <div class="admin-outline-nav-submenu">
-      <a href="/{{ setting.site.admin_directory }}/goods/lists" class="admin-outline-nav-submenu-link" :class="path.includes('/goods/lists') ? 'is-active' : ''">상품 목록</a>
-      <a href="/{{ setting.site.admin_directory }}/goods/register" class="admin-outline-nav-submenu-link" :class="path.includes('/goods/register') ? 'is-active' : ''">상품 등록</a>
+      <a href="/{{ setting.site.admin_directory }}/goods/lists" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/goods/lists' || path.startsWith('/{{ setting.site.admin_directory }}/goods/lists/')) ? 'is-active' : ''">상품 목록</a>
+      <a href="/{{ setting.site.admin_directory }}/goods/register" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/goods/register' || path.startsWith('/{{ setting.site.admin_directory }}/goods/register/')) ? 'is-active' : ''">상품 등록</a>
       <button type="button" class="admin-outline-nav-submenu-link" data-admin-margin-calculator>마진 계산기</button>
     </div>
   </div>
 
-  <a href="/{{ setting.site.admin_directory }}/order/lists" class="admin-outline-nav-link" :class="path.includes('/order') ? 'is-active-muted' : ''">
+  <a href="/{{ setting.site.admin_directory }}/order/lists" class="admin-outline-nav-link" :class="(path === '/{{ setting.site.admin_directory }}/order' || path.startsWith('/{{ setting.site.admin_directory }}/order/')) ? 'is-active-muted' : ''">
     <svg class="admin-outline-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
     </svg>
@@ -41,13 +41,13 @@
       </svg>
     </button>
     <div class="admin-outline-nav-submenu">
-      <a href="/{{ setting.site.admin_directory }}/member/lists" class="admin-outline-nav-submenu-link" :class="path.includes('/member/lists') ? 'is-active' : ''">회원 목록</a>
-      <a href="/{{ setting.site.admin_directory }}/member/deposit/history" class="admin-outline-nav-submenu-link" :class="path.includes('/member/deposit/history') ? 'is-active' : ''">적립금 내역</a>
-      <a href="/{{ setting.site.admin_directory }}/member/point/history" class="admin-outline-nav-submenu-link" :class="path.includes('/member/point/history') ? 'is-active' : ''">포인트 내역</a>
+      <a href="/{{ setting.site.admin_directory }}/member/lists" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/member/lists' || path.startsWith('/{{ setting.site.admin_directory }}/member/lists/')) ? 'is-active' : ''">회원 목록</a>
+      <a href="/{{ setting.site.admin_directory }}/member/deposit/history" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/member/deposit/history' || path.startsWith('/{{ setting.site.admin_directory }}/member/deposit/history/')) ? 'is-active' : ''">적립금 내역</a>
+      <a href="/{{ setting.site.admin_directory }}/member/point/history" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/member/point/history' || path.startsWith('/{{ setting.site.admin_directory }}/member/point/history/')) ? 'is-active' : ''">포인트 내역</a>
     </div>
   </div>
 
-  <a href="/{{ setting.site.admin_directory }}/board/lists" class="admin-outline-nav-link" :class="path.includes('/board') ? 'is-active-muted' : ''">
+  <a href="/{{ setting.site.admin_directory }}/board/lists" class="admin-outline-nav-link" :class="(path === '/{{ setting.site.admin_directory }}/board' || path.startsWith('/{{ setting.site.admin_directory }}/board/')) ? 'is-active-muted' : ''">
     <svg class="admin-outline-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v8a2 2 0 01-2 2z"></path>
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4v6h6M8 13h8M8 17h8"></path>
@@ -55,7 +55,7 @@
     <span class="admin-outline-nav-text">게시판 관리</span>
   </a>
 
-  <a href="/{{ setting.site.admin_directory }}/settlement/lists" class="admin-outline-nav-link" :class="path.includes('/settlement') ? 'is-active-muted' : ''">
+  <a href="/{{ setting.site.admin_directory }}/settlement/lists" class="admin-outline-nav-link" :class="(path === '/{{ setting.site.admin_directory }}/settlement' || path.startsWith('/{{ setting.site.admin_directory }}/settlement/')) ? 'is-active-muted' : ''">
     <svg class="admin-outline-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v-1"></path>
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -83,10 +83,10 @@
           </svg>
         </button>
         <div class="admin-outline-nav-nested-submenu">
-          <a href="/{{ setting.site.admin_directory }}/setting/basic/shop" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/basic/shop') ? 'is-active' : ''">쇼핑몰 정보</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/basic/terms" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/basic/terms') ? 'is-active' : ''">이용약관</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/basic/privacy" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/basic/privacy') ? 'is-active' : ''">개인정보 취급방침</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/basic/legal" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/basic/legal') ? 'is-active' : ''">책임의 한계 및 법적고지</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/basic/shop" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/basic/shop' || path.startsWith('/{{ setting.site.admin_directory }}/setting/basic/shop/')) ? 'is-active' : ''">쇼핑몰 정보</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/basic/terms" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/basic/terms' || path.startsWith('/{{ setting.site.admin_directory }}/setting/basic/terms/')) ? 'is-active' : ''">이용약관</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/basic/privacy" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/basic/privacy' || path.startsWith('/{{ setting.site.admin_directory }}/setting/basic/privacy/')) ? 'is-active' : ''">개인정보 취급방침</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/basic/legal" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/basic/legal' || path.startsWith('/{{ setting.site.admin_directory }}/setting/basic/legal/')) ? 'is-active' : ''">책임의 한계 및 법적고지</a>
         </div>
       </div>
       <div class="admin-outline-nav-subgroup" :class="settingGoodsMenuOpen ? 'is-open' : ''">
@@ -97,11 +97,11 @@
           </svg>
         </button>
         <div class="admin-outline-nav-nested-submenu">
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/register" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/register') ? 'is-active' : ''">등록설정</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/platform-fee') ? 'is-active' : ''">플랫폼 수수료 설정</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/prohibited-word') ? 'is-active' : ''">금지단어</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/origin" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/origin') ? 'is-active' : ''">원산지</a>
-          <a href="/{{ setting.site.admin_directory }}/setting/goods/notice" class="admin-outline-nav-submenu-link" :class="path.includes('/setting/goods/notice') ? 'is-active' : ''">상품정보고시</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/register" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/goods/register' || path.startsWith('/{{ setting.site.admin_directory }}/setting/goods/register/')) ? 'is-active' : ''">등록설정</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/platform-fee" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/goods/platform-fee' || path.startsWith('/{{ setting.site.admin_directory }}/setting/goods/platform-fee/')) ? 'is-active' : ''">플랫폼 수수료 설정</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/prohibited-word" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/goods/prohibited-word' || path.startsWith('/{{ setting.site.admin_directory }}/setting/goods/prohibited-word/')) ? 'is-active' : ''">금지단어</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/origin" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/goods/origin' || path.startsWith('/{{ setting.site.admin_directory }}/setting/goods/origin/')) ? 'is-active' : ''">원산지</a>
+          <a href="/{{ setting.site.admin_directory }}/setting/goods/notice" class="admin-outline-nav-submenu-link" :class="(path === '/{{ setting.site.admin_directory }}/setting/goods/notice' || path.startsWith('/{{ setting.site.admin_directory }}/setting/goods/notice/')) ? 'is-active' : ''">상품정보고시</a>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ class GoodsRegisterSetting
 
   private const DEFAULTS = [
     'pricing_method' => 'SUPPLY_PRICE',
-    'margin_rate' => 20,
+    'margin_rate' => 20.0,
     'rounding_unit' => 10,
     'rounding_type' => 'ROUND',
     'block_under_supply_price' => 'Y',
@@ -23,6 +23,17 @@ class GoodsRegisterSetting
     'max_image_count' => 10,
     'max_option_count' => 100,
     'max_text_option_count' => 20,
+    'image_min_width' => 600,
+    'image_min_height' => 600,
+    'image_max_upload_mb' => 20,
+    'thumb_list_fit' => 'CONTAIN',
+    'thumb_list_size' => 600,
+    'thumb_detail_fit' => 'CONTAIN',
+    'thumb_detail_size' => 1000,
+    'thumb_detail_list_fit' => 'CONTAIN',
+    'thumb_detail_list_size' => 300,
+    'thumb_etc_list_fit' => 'CONTAIN',
+    'thumb_etc_list_size' => 120,
     'extra_shipping_jeju' => 0,
     'extra_shipping_island' => 0,
     'return_shipping_fee' => 2500,
@@ -31,7 +42,7 @@ class GoodsRegisterSetting
 
   private const META = [
     'pricing_method' => ['value_type' => 'string', 'description' => '기본 판매가 산정방식'],
-    'margin_rate' => ['value_type' => 'int', 'description' => '기본 마진율'],
+    'margin_rate' => ['value_type' => 'float', 'description' => '기본 마진율'],
     'rounding_unit' => ['value_type' => 'int', 'description' => '반올림 단위'],
     'rounding_type' => ['value_type' => 'string', 'description' => '반올림 처리 방식'],
     'block_under_supply_price' => ['value_type' => 'string', 'description' => '가격 보호'],
@@ -42,6 +53,17 @@ class GoodsRegisterSetting
     'max_image_count' => ['value_type' => 'int', 'description' => '이미지 등록 수'],
     'max_option_count' => ['value_type' => 'int', 'description' => '옵션 등록 수'],
     'max_text_option_count' => ['value_type' => 'int', 'description' => '텍스트 옵션 등록 수'],
+    'image_min_width' => ['value_type' => 'int', 'description' => '원본 최소 가로 크기'],
+    'image_min_height' => ['value_type' => 'int', 'description' => '원본 최소 세로 크기'],
+    'image_max_upload_mb' => ['value_type' => 'int', 'description' => '원본 업로드 허용 용량'],
+    'thumb_list_fit' => ['value_type' => 'string', 'description' => '목록이미지 노출방법'],
+    'thumb_list_size' => ['value_type' => 'int', 'description' => '목록이미지 기준 크기'],
+    'thumb_detail_fit' => ['value_type' => 'string', 'description' => '상세이미지 노출방법'],
+    'thumb_detail_size' => ['value_type' => 'int', 'description' => '상세이미지 기준 크기'],
+    'thumb_detail_list_fit' => ['value_type' => 'string', 'description' => '상세목록이미지 노출방법'],
+    'thumb_detail_list_size' => ['value_type' => 'int', 'description' => '상세목록이미지 기준 크기'],
+    'thumb_etc_list_fit' => ['value_type' => 'string', 'description' => '기타목록이미지 노출방법'],
+    'thumb_etc_list_size' => ['value_type' => 'int', 'description' => '기타목록이미지 기준 크기'],
     'extra_shipping_jeju' => ['value_type' => 'int', 'description' => '제주 추가 배송비'],
     'extra_shipping_island' => ['value_type' => 'int', 'description' => '도서산간 추가 배송비'],
     'return_shipping_fee' => ['value_type' => 'int', 'description' => '반품 배송비'],
@@ -53,6 +75,7 @@ class GoodsRegisterSetting
   private const ROUNDING_TYPES = ['CEIL', 'ROUND', 'FLOOR'];
   private const SHIPPING_TYPES = ['PAID', 'QUANTITY', 'FREE', 'COD'];
   private const YES_NO_VALUES = ['Y', 'N'];
+  private const THUMBNAIL_FITS = ['CONTAIN', 'COVER'];
 
   private ?array $cachedSettings = null;
 
@@ -122,7 +145,7 @@ class GoodsRegisterSetting
     }
     $normalized['pricing_method'] = $pricingMethod;
 
-    $marginRateResult = $this->normalizeInt($data, 'margin_rate', '기본 마진율은 0 이상의 숫자로 입력해 주세요.', 'margin_rate', 0, 1000);
+    $marginRateResult = $this->normalizeDecimal($data, 'margin_rate', '기본 마진율은 0 이상의 숫자로 입력해 주세요.', 'margin_rate', 0, 1000);
     if (($marginRateResult['success'] ?? false) !== true) {
       return $marginRateResult;
     }
@@ -159,6 +182,45 @@ class GoodsRegisterSetting
         return $result;
       }
       $normalized[$field] = $result['value'];
+    }
+
+    foreach ([
+      'image_min_width' => ['원본 최소 가로는 100~5000px로 입력해 주세요.', 100, 5000],
+      'image_min_height' => ['원본 최소 세로는 100~5000px로 입력해 주세요.', 100, 5000],
+      'image_max_upload_mb' => ['원본 업로드 허용 용량은 1~100MB로 입력해 주세요.', 1, 100],
+    ] as $field => [$message, $min, $max]) {
+      $result = $this->normalizeInt($data, $field, $message, $field, $min, $max);
+      if (($result['success'] ?? false) !== true) {
+        return $result;
+      }
+      $normalized[$field] = $result['value'];
+    }
+
+
+    foreach ([
+      'thumb_list_size' => '목록이미지 기준 크기는 50~3000px로 입력해 주세요.',
+      'thumb_detail_size' => '상세이미지 기준 크기는 50~3000px로 입력해 주세요.',
+      'thumb_detail_list_size' => '상세목록이미지 기준 크기는 50~3000px로 입력해 주세요.',
+      'thumb_etc_list_size' => '기타목록이미지 기준 크기는 50~3000px로 입력해 주세요.',
+    ] as $field => $message) {
+      $result = $this->normalizeInt($data, $field, $message, $field, 50, 3000);
+      if (($result['success'] ?? false) !== true) {
+        return $result;
+      }
+      $normalized[$field] = $result['value'];
+    }
+
+    foreach ([
+      'thumb_list_fit' => '목록이미지 노출방법을 올바르게 선택해 주세요.',
+      'thumb_detail_fit' => '상세이미지 노출방법을 올바르게 선택해 주세요.',
+      'thumb_detail_list_fit' => '상세목록이미지 노출방법을 올바르게 선택해 주세요.',
+      'thumb_etc_list_fit' => '기타목록이미지 노출방법을 올바르게 선택해 주세요.',
+    ] as $field => $message) {
+      $value = (string) ($data[$field] ?? '');
+      if (!in_array($value, self::THUMBNAIL_FITS, true)) {
+        return $this->fail($message, $field);
+      }
+      $normalized[$field] = $value;
     }
 
     $shippingType = (string) ($data['default_shipping_type'] ?? '');
@@ -220,17 +282,50 @@ class GoodsRegisterSetting
     $data['rounding_type'] = in_array((string) $data['rounding_type'], self::ROUNDING_TYPES, true) ? (string) $data['rounding_type'] : self::DEFAULTS['rounding_type'];
     $data['block_under_supply_price'] = in_array((string) $data['block_under_supply_price'], self::YES_NO_VALUES, true) ? (string) $data['block_under_supply_price'] : self::DEFAULTS['block_under_supply_price'];
     $data['default_shipping_type'] = in_array((string) $data['default_shipping_type'], self::SHIPPING_TYPES, true) ? (string) $data['default_shipping_type'] : self::DEFAULTS['default_shipping_type'];
-
-    foreach (['margin_rate', 'shipping_fee', 'actual_shipping_fee', 'shipping_qty_limit', 'max_image_count', 'max_option_count', 'max_text_option_count', 'extra_shipping_jeju', 'extra_shipping_island', 'return_shipping_fee', 'exchange_shipping_fee'] as $field) {
+    $data['margin_rate'] = is_numeric($data['margin_rate']) ? (float) $data['margin_rate'] : self::DEFAULTS['margin_rate'];
+    foreach (['shipping_fee', 'actual_shipping_fee', 'shipping_qty_limit', 'max_image_count', 'max_option_count', 'max_text_option_count', 'image_min_width', 'image_min_height', 'image_max_upload_mb', 'thumb_list_size', 'thumb_detail_size', 'thumb_detail_list_size', 'thumb_etc_list_size', 'extra_shipping_jeju', 'extra_shipping_island', 'return_shipping_fee', 'exchange_shipping_fee'] as $field) {
       $data[$field] = is_numeric($data[$field]) ? (int) $data[$field] : self::DEFAULTS[$field];
+    }
+
+    foreach (['thumb_list_fit', 'thumb_detail_fit', 'thumb_detail_list_fit', 'thumb_etc_list_fit'] as $field) {
+      $data[$field] = in_array((string) $data[$field], self::THUMBNAIL_FITS, true) ? (string) $data[$field] : self::DEFAULTS[$field];
     }
 
     $data['max_image_count'] = min(20, max(1, (int) $data['max_image_count']));
     $data['max_option_count'] = min(500, max(1, (int) $data['max_option_count']));
     $data['max_text_option_count'] = min(100, max(1, (int) $data['max_text_option_count']));
+    $data['image_min_width'] = min(5000, max(100, (int) $data['image_min_width']));
+    $data['image_min_height'] = min(5000, max(100, (int) $data['image_min_height']));
+
+    $data['image_max_upload_mb'] = min(100, max(1, (int) $data['image_max_upload_mb']));
+    foreach (['thumb_list_size', 'thumb_detail_size', 'thumb_detail_list_size', 'thumb_etc_list_size'] as $field) {
+      $data[$field] = min(3000, max(50, (int) $data[$field]));
+    }
     $data['shipping_qty_limit'] = max(0, (int) $data['shipping_qty_limit']);
 
     return $data;
+  }
+
+  /**
+   * 소수 입력값을 검증합니다.
+   *
+   * @param array $data 입력 데이터
+   * @param string $field 필드명
+   * @param string $message 오류 문구
+   * @param string $focusField 포커스 필드
+   * @param float $min 최소값
+   * @param float $max 최대값
+   *
+   * @return array
+   */
+  private function normalizeDecimal(array $data, string $field, string $message, string $focusField, float $min, float $max): array
+  {
+    $value = trim((string) ($data[$field] ?? ''));
+    if ($value === '' || preg_match('/^\d+(?:\.\d+)?$/', $value) !== 1 || (float) $value < $min || (float) $value > $max) {
+      return $this->fail($message, $focusField);
+    }
+
+    return ['success' => true, 'value' => (float) $value];
   }
 
   /**

@@ -30,8 +30,8 @@
             <span class="admin-form-label">기본 산정방식</span>
             <div class="admin-form-content admin-setting-goods-register-control">
               <div class="admin-goods-register-radio-group is-equal" role="radiogroup" aria-label="기본 판매가 산정방식">
-                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="SUPPLY_PRICE"{% if config.pricing_method == 'SUPPLY_PRICE' %} checked{% endif %}><span>공급가</span></label>
-                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="MARGIN_RATE"{% if config.pricing_method == 'MARGIN_RATE' %} checked{% endif %}><span>마진율</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="SUPPLY_PRICE" {{ is_checked(config.pricing_method, 'SUPPLY_PRICE') }}><span>공급가</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="pricing_method" value="MARGIN_RATE" {{ is_checked(config.pricing_method, 'MARGIN_RATE') }}><span>마진율</span></label>
               </div>
               <span class="admin-setting-goods-register-inline-text">대비 판매가 산정</span>
             </div>
@@ -39,7 +39,7 @@
           <div class="admin-setting-goods-register-half-row">
             <label class="admin-form-label" for="margin_rate">기본 마진율</label>
             <div class="admin-form-content admin-setting-goods-register-price-control">
-              <span class="admin-goods-register-unit-input"><input id="margin_rate" name="margin_rate" type="text" inputmode="numeric" class="admin-input" value="{{ config.margin_rate }}"><span class="admin-goods-register-unit">%</span></span>
+              <span class="admin-goods-register-unit-input"><input id="margin_rate" name="margin_rate" type="text" inputmode="decimal" class="admin-input" value="{{ config.margin_rate }}"><span class="admin-goods-register-unit">%</span></span>
             </div>
           </div>
         </div>
@@ -55,10 +55,10 @@
             <label class="admin-form-label" for="rounding_unit">반올림 단위</label>
             <div class="admin-form-content admin-setting-goods-register-control is-narrow">
               <select id="rounding_unit" name="rounding_unit" class="admin-input">
-                <option value="1"{% if config.rounding_unit == '1' %} selected{% endif %}>1원</option>
-                <option value="10"{% if config.rounding_unit == '10' %} selected{% endif %}>10원</option>
-                <option value="100"{% if config.rounding_unit == '100' %} selected{% endif %}>100원</option>
-                <option value="1000"{% if config.rounding_unit == '1000' %} selected{% endif %}>1,000원</option>
+                <option value="1" {{ is_selected(config.rounding_unit, '1') }}>1원</option>
+                <option value="10" {{ is_selected(config.rounding_unit, '10') }}>10원</option>
+                <option value="100" {{ is_selected(config.rounding_unit, '100') }}>100원</option>
+                <option value="1000" {{ is_selected(config.rounding_unit, '1000') }}>1,000원</option>
               </select>
             </div>
           </div>
@@ -66,9 +66,9 @@
             <span class="admin-form-label">처리 방식</span>
             <div class="admin-form-content admin-setting-goods-register-control">
               <div class="admin-goods-register-radio-group is-three" role="radiogroup" aria-label="반올림 처리 방식">
-                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="CEIL"{% if config.rounding_type == 'CEIL' %} checked{% endif %}><span>올림</span></label>
-                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="ROUND"{% if config.rounding_type == 'ROUND' %} checked{% endif %}><span>반올림</span></label>
-                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="FLOOR"{% if config.rounding_type == 'FLOOR' %} checked{% endif %}><span>내림</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="CEIL" {{ is_checked(config.rounding_type, 'CEIL') }}><span>올림</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="ROUND" {{ is_checked(config.rounding_type, 'ROUND') }}><span>반올림</span></label>
+                <label class="admin-goods-register-radio"><input type="radio" name="rounding_type" value="FLOOR" {{ is_checked(config.rounding_type, 'FLOOR') }}><span>내림</span></label>
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@
         <div class="admin-form-row">
           <span class="admin-form-label">가격 보호</span>
           <div class="admin-form-content admin-setting-goods-register-checks">
-            <label class="admin-goods-register-check"><input type="hidden" name="block_under_supply_price" value="N"><input type="checkbox" name="block_under_supply_price" value="Y"{% if config.block_under_supply_price == 'Y' %} checked{% endif %}><span>판매가가 공급가보다 낮거나 가격준수일 경우 준수가격보다 낮으면 차단</span></label>
+            <label class="admin-goods-register-check"><input type="hidden" name="block_under_supply_price" value="N"><input type="checkbox" name="block_under_supply_price" value="Y" {{ is_checked(config.block_under_supply_price, 'Y') }}><span>판매가가 공급가보다 낮거나 가격준수일 경우 준수가격보다 낮으면 차단</span></label>
           </div>
         </div>
       </div>
@@ -114,6 +114,83 @@
       <div class="admin-card-header">
         <h3 class="admin-card-title admin-collapsible-card-title">
           <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
+            <span>이미지 원본/썸네일 설정</span>
+            <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </h3>
+      </div>
+      <div class="admin-setting-goods-register-body" data-admin-collapsible-content>
+        <div class="admin-form-row">
+          <span class="admin-form-label">원본 최소 사이즈</span>
+          <div class="admin-form-content admin-setting-goods-register-size-row">
+            <label class="admin-setting-goods-register-size-field" for="image_min_width"><span>가로</span><span class="admin-goods-register-unit-input"><input id="image_min_width" name="image_min_width" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_min_width }}"><span class="admin-goods-register-unit">px</span></span></label>
+            <svg class="admin-setting-goods-register-size-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            <label class="admin-setting-goods-register-size-field" for="image_min_height"><span>세로</span><span class="admin-goods-register-unit-input"><input id="image_min_height" name="image_min_height" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_min_height }}"><span class="admin-goods-register-unit">px</span></span></label>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="image_max_upload_mb">업로드 허용용량</label>
+          <div class="admin-form-content admin-setting-goods-register-upload-size-control">
+            <span class="admin-goods-register-unit-input"><input id="image_max_upload_mb" name="image_max_upload_mb" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_max_upload_mb }}"><span class="admin-goods-register-unit">MB</span></span>
+          </div>
+        </div>
+        <div class="admin-form-row">
+          <span class="admin-form-label">썸네일 항목</span>
+          <div class="admin-form-content admin-setting-goods-register-thumb-grid">
+            <label class="admin-setting-goods-register-thumb-field" for="thumb_list_size">
+              <span>목록이미지</span>
+              <div class="admin-setting-goods-register-thumb-control">
+                <span class="admin-goods-register-unit-input"><input id="thumb_list_size" name="thumb_list_size" type="text" inputmode="numeric" class="admin-input" value="{{ config.thumb_list_size }}"><span class="admin-goods-register-unit">px</span></span>
+                <select id="thumb_list_fit" name="thumb_list_fit" class="admin-input admin-setting-goods-register-thumb-fit-select">
+                  <option value="CONTAIN" {{ is_selected(config.thumb_list_fit, 'CONTAIN') }}>contain</option>
+                  <option value="COVER" {{ is_selected(config.thumb_list_fit, 'COVER') }}>cover</option>
+                </select>
+              </div>
+            </label>
+            <label class="admin-setting-goods-register-thumb-field" for="thumb_detail_size">
+              <span>상세이미지</span>
+              <div class="admin-setting-goods-register-thumb-control">
+                <span class="admin-goods-register-unit-input"><input id="thumb_detail_size" name="thumb_detail_size" type="text" inputmode="numeric" class="admin-input" value="{{ config.thumb_detail_size }}"><span class="admin-goods-register-unit">px</span></span>
+                <select id="thumb_detail_fit" name="thumb_detail_fit" class="admin-input admin-setting-goods-register-thumb-fit-select">
+                  <option value="CONTAIN" {{ is_selected(config.thumb_detail_fit, 'CONTAIN') }}>contain</option>
+                  <option value="COVER" {{ is_selected(config.thumb_detail_fit, 'COVER') }}>cover</option>
+                </select>
+              </div>
+            </label>
+            <label class="admin-setting-goods-register-thumb-field" for="thumb_detail_list_size">
+              <span>상세목록이미지</span>
+              <div class="admin-setting-goods-register-thumb-control">
+                <span class="admin-goods-register-unit-input"><input id="thumb_detail_list_size" name="thumb_detail_list_size" type="text" inputmode="numeric" class="admin-input" value="{{ config.thumb_detail_list_size }}"><span class="admin-goods-register-unit">px</span></span>
+                <select id="thumb_detail_list_fit" name="thumb_detail_list_fit" class="admin-input admin-setting-goods-register-thumb-fit-select">
+                  <option value="CONTAIN" {{ is_selected(config.thumb_detail_list_fit, 'CONTAIN') }}>contain</option>
+                  <option value="COVER" {{ is_selected(config.thumb_detail_list_fit, 'COVER') }}>cover</option>
+                </select>
+              </div>
+            </label>
+            <label class="admin-setting-goods-register-thumb-field" for="thumb_etc_list_size">
+              <span>기타목록이미지</span>
+              <div class="admin-setting-goods-register-thumb-control">
+                <span class="admin-goods-register-unit-input"><input id="thumb_etc_list_size" name="thumb_etc_list_size" type="text" inputmode="numeric" class="admin-input" value="{{ config.thumb_etc_list_size }}"><span class="admin-goods-register-unit">px</span></span>
+                <select id="thumb_etc_list_fit" name="thumb_etc_list_fit" class="admin-input admin-setting-goods-register-thumb-fit-select">
+                  <option value="CONTAIN" {{ is_selected(config.thumb_etc_list_fit, 'CONTAIN') }}>contain</option>
+                  <option value="COVER" {{ is_selected(config.thumb_etc_list_fit, 'COVER') }}>cover</option>
+                </select>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <p class="admin-setting-goods-register-image-help">※ 원본은 최소 사이즈만 검증하고 비율은 유지합니다.<br/>※ 썸네일 노출은 종류별 contain/cover로 설정합니다.<br/>※ contain - 이미지를 잘리지 않게 전체 표시하고 남는 공간은 여백으로 채웁니다.<br/>※ cover - 영역을 채우도록 표시하고 넘치는 부분은 잘라냅니다.</p>
+      </div>
+    </section>
+
+    <section class="admin-card admin-setting-goods-register-section" data-admin-mobile-collapsible-card>
+      <div class="admin-card-header">
+        <h3 class="admin-card-title admin-collapsible-card-title">
+          <button type="button" class="admin-mobile-card-toggle" data-admin-mobile-collapsible-trigger aria-expanded="true">
             <span>배송 기본값</span>
             <svg class="admin-mobile-card-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="m6 9 6 6 6-6"></path>
@@ -126,10 +203,10 @@
           <span class="admin-form-label">배송 정책</span>
           <div class="admin-form-content admin-goods-register-control">
             <div class="admin-goods-register-radio-group is-four" role="radiogroup" aria-label="기본 배송 정책">
-              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="PAID"{% if config.default_shipping_type == 'PAID' %} checked{% endif %}><span>유료 배송</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="QUANTITY"{% if config.default_shipping_type == 'QUANTITY' %} checked{% endif %}><span>수량별</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="FREE"{% if config.default_shipping_type == 'FREE' %} checked{% endif %}><span>무료 배송</span></label>
-              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="COD"{% if config.default_shipping_type == 'COD' %} checked{% endif %}><span>착불 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="PAID" {{ is_checked(config.default_shipping_type, 'PAID') }}><span>유료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="QUANTITY" {{ is_checked(config.default_shipping_type, 'QUANTITY') }}><span>수량별</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="FREE" {{ is_checked(config.default_shipping_type, 'FREE') }}><span>무료 배송</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="default_shipping_type" value="COD" {{ is_checked(config.default_shipping_type, 'COD') }}><span>착불 배송</span></label>
             </div>
           </div>
         </div>

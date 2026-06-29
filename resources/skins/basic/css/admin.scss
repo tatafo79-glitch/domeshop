@@ -2774,6 +2774,10 @@ $admin-tile: #272729;
     @apply flex min-w-0 items-center;
   }
 
+  .admin-setting-goods-register-ratio-desc {
+    @apply ml-3 text-[13px] font-normal text-slate-500;
+  }
+
   .admin-setting-goods-register-control.is-narrow .admin-input {
     @apply sm:max-w-40;
   }
@@ -2852,6 +2856,119 @@ $admin-tile: #272729;
     @apply justify-center;
   }
 
+  .admin-setting-goods-register-control.is-medium .admin-input {
+    @apply sm:max-w-60;
+  }
+
+  .admin-setting-goods-register-size-row {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-end;
+  }
+
+  .admin-setting-goods-register-size-field,
+  .admin-setting-goods-register-thumb-field {
+    @apply flex min-w-0 flex-col gap-1.5;
+  }
+
+  .admin-setting-goods-register-size-field > span:first-child,
+  .admin-setting-goods-register-thumb-field > span:first-child {
+    @apply text-[13px] font-normal text-slate-600;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit-input {
+    @apply w-full sm:w-36;
+  }
+
+  .admin-setting-goods-register-size-x {
+    @apply hidden h-5 w-5 shrink-0 text-slate-400 sm:block;
+    margin-bottom: 9px;
+    stroke-width: 1.8;
+  }
+
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit-input {
+    @apply w-full sm:w-36;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit-input,
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit-input,
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input {
+    height: 38px;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit-input .admin-input,
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit-input .admin-input,
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input .admin-input {
+    height: 38px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-right: 12px;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit,
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit,
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit {
+    position: static;
+    display: inline-flex;
+    height: 38px;
+    align-items: center;
+    line-height: 38px;
+    transform: none;
+  }
+
+  .admin-setting-goods-register-thumb-grid {
+    @apply flex w-full flex-col;
+  }
+
+  .admin-setting-goods-register-thumb-field {
+    @apply flex-row items-center gap-4 border-b py-3 last:border-b-0;
+    border-color: $admin-hairline;
+  }
+
+  .admin-setting-goods-register-thumb-field > span:first-child {
+    @apply w-28 shrink-0;
+  }
+
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input {
+    @apply w-36 shrink-0;
+  }
+
+  .admin-setting-goods-register-thumb-control {
+    @apply flex min-w-0 flex-1 flex-wrap items-center gap-3;
+  }
+
+  .admin-setting-goods-register-thumb-fit-select {
+    width: 100% !important;
+  }
+
+  @media (max-width: 639px) {
+    .admin-setting-goods-register-thumb-field {
+      @apply flex-col items-stretch gap-2;
+    }
+
+    .admin-setting-goods-register-thumb-field > span:first-child {
+      @apply w-full;
+    }
+
+    .admin-setting-goods-register-thumb-control {
+      @apply w-full;
+    }
+
+    .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input {
+      @apply w-full shrink-0;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .admin-setting-goods-register-thumb-fit-select {
+      width: 7rem !important;
+      min-width: 7rem;
+    }
+  }
+
+  .admin-setting-goods-register-image-help {
+    @apply px-6 py-4 text-[13px] font-normal text-slate-500;
+  }
   .admin-setting-goods-register-bottom-actions {
     @apply flex justify-end gap-3;
   }
@@ -3691,6 +3808,23 @@ $admin-tile: #272729;
   .admin-goods-register-unit-input .admin-goods-register-unit,
   .admin-goods-register-option-unit-input .admin-goods-register-unit {
     @apply pointer-events-none absolute right-2 text-[13px] font-normal text-slate-500;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit-input .admin-goods-register-unit,
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit-input .admin-goods-register-unit,
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input .admin-goods-register-unit {
+    position: static;
+    display: inline-flex;
+    height: 38px;
+    align-items: center;
+    line-height: 38px;
+    transform: none;
+  }
+
+  .admin-setting-goods-register-size-field .admin-goods-register-unit-input .admin-input,
+  .admin-setting-goods-register-upload-size-control .admin-goods-register-unit-input .admin-input,
+  .admin-setting-goods-register-thumb-field .admin-goods-register-unit-input .admin-input {
+    padding-right: 12px;
   }
 
 

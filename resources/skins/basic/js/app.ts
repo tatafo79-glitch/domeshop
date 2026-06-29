@@ -1032,6 +1032,10 @@ interface AdminSettingSaveResponse {
 
 const stripAdminSettingNumber = (value: string): string => value.replace(/,/g, '').trim();
 
+const ADMIN_GOODS_REGISTER_COMMA_NUMBER_FIELDS = ['shipping_fee', 'actual_shipping_fee', 'extra_shipping_jeju', 'extra_shipping_island', 'return_shipping_fee', 'exchange_shipping_fee'] as const;
+
+type AdminGoodsRegisterCommaNumberField = typeof ADMIN_GOODS_REGISTER_COMMA_NUMBER_FIELDS[number];
+
 const focusAdminSettingField = (form: HTMLFormElement, fieldName: string): void => {
   const field = Array.from(form.elements).find((control: Element): boolean => {
     return control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement
@@ -1047,14 +1051,62 @@ const focusAdminSettingField = (form: HTMLFormElement, fieldName: string): void 
   window.setTimeout((): void => field.focus(), 180);
 };
 
+const formatAdminSettingCommaNumber = (value: string): string => {
+  const normalized = stripAdminSettingNumber(value).replace(/[^0-9]/g, '');
+
+  if (normalized === '') {
+    return '';
+  }
+
+  return Number.parseInt(normalized, 10).toLocaleString('en-US');
+};
+
+const syncAdminSettingCommaNumberField = (input: HTMLInputElement, isFormatted: boolean): void => {
+  const nextValue = isFormatted ? formatAdminSettingCommaNumber(input.value) : stripAdminSettingNumber(input.value).replace(/[^0-9]/g, '');
+
+  if (input.value !== nextValue) {
+    input.value = nextValue;
+  }
+};
+
+const bindAdminSettingCommaNumberField = (input: HTMLInputElement): void => {
+  if (input.dataset.adminSettingCommaBound === '1') {
+    syncAdminSettingCommaNumberField(input, true);
+    return;
+  }
+
+  input.dataset.adminSettingCommaBound = '1';
+  input.addEventListener('focus', (): void => syncAdminSettingCommaNumberField(input, false));
+  input.addEventListener('input', (): void => syncAdminSettingCommaNumberField(input, false));
+  input.addEventListener('blur', (): void => syncAdminSettingCommaNumberField(input, true));
+  syncAdminSettingCommaNumberField(input, true);
+};
+
+
+const syncAdminGoodsImageSettingFields = (form: HTMLFormElement): void => {
+  ADMIN_GOODS_REGISTER_COMMA_NUMBER_FIELDS.forEach((fieldName: AdminGoodsRegisterCommaNumberField): void => {
+    const input = form.querySelector<HTMLInputElement>(`#${fieldName}`);
+
+    if (!input) {
+      return;
+    }
+
+    bindAdminSettingCommaNumberField(input);
+  });
+};
+
+const initAdminGoodsImageDimensionFields = (_form: HTMLFormElement): void => {
+};
+
 const createAdminSettingFormData = (form: HTMLFormElement): FormData => {
   const formData = new FormData(form);
 
-  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"][name]').forEach((input: HTMLInputElement): void => {
+  form.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"][name], input[inputmode="decimal"][name]').forEach((input: HTMLInputElement): void => {
     if (!input.disabled) {
       formData.set(input.name, stripAdminSettingNumber(input.value));
     }
   });
+
 
   const shippingType = form.querySelector<HTMLInputElement>('input[name="default_shipping_type"]:checked')?.value ?? '';
   if (shippingType !== 'QUANTITY') {
@@ -1069,6 +1121,9 @@ const initAdminGoodsRegisterSettingForm = (): void => {
   if (!form) {
     return;
   }
+
+  initAdminGoodsImageDimensionFields(form);
+  syncAdminGoodsImageSettingFields(form);
 
   const submitButtons = Array.from(form.querySelectorAll<HTMLButtonElement>('button[type="submit"]'));
   const setSubmitting = (isSubmitting: boolean): void => {
@@ -1114,6 +1169,7 @@ const initAdminGoodsRegisterSettingForm = (): void => {
   form.addEventListener('reset', (): void => {
     window.setTimeout((): void => {
       syncAdminGoodsRegisterSettingShippingRows();
+      syncAdminGoodsImageSettingFields(form);
       syncAllAdminGoodsRadioIndicators();
     }, 0);
   });

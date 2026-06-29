@@ -49,7 +49,7 @@
             <div class="admin-form-content admin-setting-prohibited-word-control">
               <select id="target_scope" name="target_scope" class="admin-input">
                 <option value="BOTH">상품명 + 제조사 + 키워드</option>
-                <option value="NAME_KEYWORD" selected>상품명 + 키워드</option>
+                <option value="NAME_KEYWORD" {{ is_selected('NAME_KEYWORD', 'NAME_KEYWORD', true) }}>상품명 + 키워드</option>
                 <option value="NAME">상품명</option>
                 <option value="MANUFACTURER">제조사</option>
                 <option value="KEYWORD">키워드</option>
@@ -74,7 +74,7 @@
           <div class="admin-form-row">
             <span class="admin-form-label">사용 여부</span>
             <div class="admin-form-content admin-setting-prohibited-word-checks">
-              <label class="admin-goods-register-check"><input type="checkbox" name="is_active" value="Y" checked><span>사용함</span></label>
+              <label class="admin-goods-register-check"><input type="checkbox" name="is_active" value="Y" {{ is_checked('Y', 'Y', true) }}><span>사용함</span></label>
             </div>
           </div>
           <div class="admin-form-row">
