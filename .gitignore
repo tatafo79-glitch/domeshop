@@ -3,6 +3,22 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+.cache/
+.copilot/
+.dotnet/
+.vscode-server/
+.bash_history
+.bash_logout
+.bashrc
+.motd_shown
+.profile
+.viminfo
+.gitconfig
+.config/
+.codex/
+.npm/
+.lesshst
+..wget-hsts
 
 # IDEs and Editors
 .vscode/
