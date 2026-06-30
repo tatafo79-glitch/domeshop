@@ -154,6 +154,8 @@ interface AdminMarginApplyMessage {
   shippingTargetSelector?: string;
   actualShippingTargetSelector?: string;
   actualShippingFee?: number;
+  shippingQtyLimitTargetSelector?: string;
+  shippingQtyLimit?: number;
 }
 
 const closeAdminIframeModal = (root: HTMLElement): void => {
@@ -318,6 +320,7 @@ const openAdminMarginCalculator = (trigger: HTMLElement): void => {
   const sellTarget = trigger.dataset.marginSellTarget || (document.querySelector<HTMLInputElement>('#sell_price') ? '#sell_price' : '#sellPriceInput');
   const shippingTarget = trigger.dataset.marginShippingTarget || (document.querySelector<HTMLInputElement>('#shipping_fee') ? '#shipping_fee' : '#shippingFeeInput');
   const actualShippingTarget = trigger.dataset.marginActualShippingTarget || (document.querySelector<HTMLInputElement>('#actual_shipping_fee') ? '#actual_shipping_fee' : shippingTarget);
+  const shippingQtyLimitTarget = trigger.dataset.marginShippingQtyLimitTarget || (document.querySelector<HTMLInputElement>('#shipping_qty_limit') ? '#shipping_qty_limit' : '');
   const shippingRow = trigger.dataset.marginShippingRow || '';
   const shippingFee = shippingRow !== '' && isHiddenBySelector(shippingRow) ? '' : getNumericInputValue(shippingTarget);
   const actualShippingFee = shippingRow !== '' && isHiddenBySelector(shippingRow) ? '' : getNumericInputValue(actualShippingTarget);
@@ -331,6 +334,10 @@ const openAdminMarginCalculator = (trigger: HTMLElement): void => {
     shipping_target: shippingTarget,
     actual_shipping_target: actualShippingTarget,
   });
+  if (shippingQtyLimitTarget !== '') {
+    params.set('shipping_qty_limit', getNumericInputValue(shippingQtyLimitTarget) || '1');
+    params.set('shipping_qty_limit_target', shippingQtyLimitTarget);
+  }
   const source = trigger.dataset.marginSource || '';
   if (source !== '') {
     params.set('source', source);
@@ -365,6 +372,20 @@ const setMarginTargetValue = (selector: string, value: number | undefined): void
   target.dispatchEvent(new Event('change', { bubbles: true }));
 };
 
+const applyQuantityShippingPolicy = (qtyLimit: number | undefined, targetSelector: string | undefined): void => {
+  if (typeof qtyLimit !== 'number' || !Number.isFinite(qtyLimit) || qtyLimit < 1) {
+    return;
+  }
+
+  const quantityRadio = document.querySelector<HTMLInputElement>('input[name="shipping_type"][value="QUANTITY"]');
+  if (quantityRadio) {
+    quantityRadio.checked = true;
+    quantityRadio.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  setMarginTargetValue(targetSelector || '#shipping_qty_limit', qtyLimit);
+};
+
 const applyAdminMarginCalculatorResult = (data: AdminMarginApplyMessage): void => {
   setMarginTargetValue(data.targetSelector || '#sell_price', data.sellPrice);
   setMarginTargetValue(data.supplyTargetSelector || '#supply_price', data.supplyPrice);
@@ -372,6 +393,7 @@ const applyAdminMarginCalculatorResult = (data: AdminMarginApplyMessage): void =
   if (typeof data.actualShippingFee === 'number') {
     setMarginTargetValue(data.actualShippingTargetSelector || '#actual_shipping_fee', data.actualShippingFee);
   }
+  applyQuantityShippingPolicy(data.shippingQtyLimit, data.shippingQtyLimitTargetSelector);
 
   document.querySelectorAll<HTMLElement>('.admin-iframe-modal').forEach((modal: HTMLElement): void => {
     closeAdminIframeModal(modal);

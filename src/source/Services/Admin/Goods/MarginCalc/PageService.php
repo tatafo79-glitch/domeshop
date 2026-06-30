@@ -29,6 +29,8 @@ class PageService extends BaseService
         'sell_price' => $this->normalizeMoney($query['sell_price'] ?? null),
         'shipping_fee' => $this->normalizeMoney($query['shipping_fee'] ?? null),
         'actual_shipping_fee' => $this->normalizeMoney($query['actual_shipping_fee'] ?? ($query['shipping_fee'] ?? null)),
+        'shipping_qty_limit' => $this->normalizeQuantity($query['shipping_qty_limit'] ?? null),
+        'purchase_qty' => $this->normalizeQuantity($query['purchase_qty'] ?? null),
         'can_apply' => $this->isGoodsFormSource($query['source'] ?? null),
       ],
       'platform_fees' => $platformFees,
@@ -68,6 +70,28 @@ class PageService extends BaseService
     }
 
     return max(0, (int) $numeric);
+  }
+
+  /**
+   * 수량 쿼리 값을 1 이상의 정수로 보정합니다.
+   *
+   * @param mixed $value 수량 입력값
+   *
+   * @return int
+   */
+  private function normalizeQuantity(mixed $value): int
+  {
+    if (!is_scalar($value)) {
+      return 1;
+    }
+
+    $numeric = preg_replace('/[^0-9]/', '', (string) $value) ?? '';
+
+    if ($numeric === '') {
+      return 1;
+    }
+
+    return max(1, (int) $numeric);
   }
 
   /**

@@ -2381,7 +2381,7 @@ $admin-tile: #272729;
   }
 
   .admin-goods-margin-calc-summary-item {
-    @apply flex min-h-[82px] flex-col items-center justify-center gap-1 border-r px-2 py-3 text-center last:border-r-0 sm:min-h-[88px] sm:gap-1.5 sm:px-4 sm:py-4;
+    @apply flex min-h-[118px] flex-col items-center justify-center gap-1 border-r px-2 py-3 text-center last:border-r-0 sm:min-h-[126px] sm:gap-1.5 sm:px-4 sm:py-4;
     border-color: $admin-hairline;
   }
 
@@ -2394,6 +2394,14 @@ $admin-tile: #272729;
   .admin-goods-margin-calc-summary-item > strong {
     @apply text-[14px] text-slate-900 sm:text-[16px];
     letter-spacing: 0;
+  }
+
+  .admin-goods-margin-calc-result-line {
+    @apply text-[13px] font-normal text-slate-500;
+  }
+
+  .admin-goods-margin-calc-result-line strong {
+    @apply font-semibold text-slate-800;
   }
 
   .admin-goods-margin-calc-summary-input {
@@ -2437,14 +2445,22 @@ $admin-tile: #272729;
     border-color: $admin-hairline;
   }
 
-  .admin-goods-margin-calc-card.is-site .admin-goods-margin-calc-row:last-child {
-    @apply md:border-b;
+  .admin-goods-margin-calc-row.is-shipping-diff {
+    @apply min-h-[62px];
   }
 
   .admin-goods-margin-calc-row > span:first-child {
     @apply flex w-35 shrink-0 items-center border-r px-4 text-[13px] font-semibold text-slate-700;
     background-color: $admin-pearl;
     border-color: $admin-hairline;
+  }
+
+  .admin-goods-margin-calc-check {
+    @apply mr-3 flex shrink-0 cursor-pointer items-center gap-1.5 text-[13px] font-normal text-slate-500;
+  }
+
+  .admin-goods-margin-calc-check input {
+    @apply h-4 w-4 cursor-pointer accent-blue-600;
   }
 
   .admin-goods-margin-calc-row > span:first-child.is-danger {
@@ -2470,6 +2486,27 @@ $admin-tile: #272729;
   .admin-goods-margin-calc-actions .admin-btn-primary,
   .admin-goods-margin-calc-actions .admin-btn-secondary {
     @apply px-8;
+  }
+
+  .admin-goods-margin-calc-formula {
+    @apply border bg-white p-4;
+    border-color: $admin-hairline;
+  }
+
+  .admin-goods-margin-calc-formula h2 {
+    @apply mb-3 text-[14px] font-semibold text-slate-800;
+  }
+
+  .admin-goods-margin-calc-formula-list {
+    @apply flex flex-col gap-1.5 text-[13px] text-slate-600;
+  }
+
+  .admin-goods-margin-calc-formula-list li {
+    @apply leading-5;
+  }
+
+  .admin-goods-margin-calc-formula-list strong {
+    @apply font-semibold text-slate-900;
   }
   .admin-member-asset-head {
     @apply flex flex-col gap-3 border bg-white p-5 sm:flex-row sm:items-center sm:justify-between;

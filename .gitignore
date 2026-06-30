@@ -19,6 +19,8 @@ $RECYCLE.BIN/
 .npm/
 .lesshst
 .wget-hsts
+.local/
+scripts/
 
 # IDEs and Editors
 .vscode/

@@ -4,10 +4,12 @@ interface MarginApplyMessage {
   supplyPrice: number;
   shippingFee: number;
   actualShippingFee: number;
+  shippingQtyLimit?: number;
   targetSelector: string;
   supplyTargetSelector: string;
   shippingTargetSelector: string;
   actualShippingTargetSelector: string;
+  shippingQtyLimitTargetSelector: string;
 }
 
 
@@ -15,6 +17,7 @@ const targetSelector = new URLSearchParams(window.location.search).get('target')
 const supplyTargetSelector = new URLSearchParams(window.location.search).get('supply_target') || '#supply_price';
 const shippingTargetSelector = new URLSearchParams(window.location.search).get('shipping_target') || '#shipping_fee';
 const actualShippingTargetSelector = new URLSearchParams(window.location.search).get('actual_shipping_target') || '#actual_shipping_fee';
+const shippingQtyLimitTargetSelector = new URLSearchParams(window.location.search).get('shipping_qty_limit_target') || '#shipping_qty_limit';
 
 const getInput = (id: string): HTMLInputElement | null => document.getElementById(id) as HTMLInputElement | null;
 const getSelect = (id: string): HTMLSelectElement | null => document.getElementById(id) as HTMLSelectElement | null;
@@ -24,6 +27,9 @@ const sellPriceInput = getInput('mcSellPrice');
 const recvShippingInput = getInput('mcRecvShipping');
 const supplyPriceInput = getInput('mcSupplyPrice');
 const sentShippingInput = getInput('mcSentShipping');
+const shippingDiffMarginInput = getInput('mcShippingDiffMargin');
+const packageQtyLimitInput = getInput('mcPackageQtyLimit');
+const purchaseQtyInput = getInput('mcPurchaseQty');
 const marketFeeInput = getInput('mcMarketFee');
 const shippingFeeRateInput = getInput('mcShippingFee');
 const addDiscountRateInput = getInput('mcAddDiscountRate');
@@ -31,11 +37,15 @@ const addFlatDiscountInput = getInput('mcAddFlatDiscount');
 const instantDiscountRateInput = getInput('mcInstantDiscountRate');
 const displayPriceInput = getInput('mcDisplayPriceInput');
 const settlementNode = getNode('mcSettlement');
+const resultProfitNode = getNode('mcResultProfit');
+const resultMarginRateNode = getNode('mcResultMarginRate');
+const formulaListNode = document.getElementById('mcFormulaList') as HTMLUListElement | null;
 const targetProfitInput = getInput('mcProfit');
 const targetMarginRateInput = getInput('mcMarginRate');
 const resetButton = document.getElementById('mcResetBtn') as HTMLButtonElement | null;
 const applyButton = document.getElementById('mcApplyBtn') as HTMLButtonElement | null;
 const platformSelect = getSelect('mcPlatformSelect');
+let targetMode: 'profit' | 'rate' | null = null;
 
 const moneyInputs: HTMLInputElement[] = [
   sellPriceInput,
@@ -43,6 +53,11 @@ const moneyInputs: HTMLInputElement[] = [
   supplyPriceInput,
   sentShippingInput,
   addFlatDiscountInput,
+].filter((input: HTMLInputElement | null): input is HTMLInputElement => input !== null);
+
+const quantityInputs: HTMLInputElement[] = [
+  packageQtyLimitInput,
+  purchaseQtyInput,
 ].filter((input: HTMLInputElement | null): input is HTMLInputElement => input !== null);
 
 const percentInputs: HTMLInputElement[] = [
@@ -53,6 +68,7 @@ const percentInputs: HTMLInputElement[] = [
 ].filter((input: HTMLInputElement | null): input is HTMLInputElement => input !== null);
 
 const formatNumber = (value: number): string => Math.round(value).toLocaleString('ko-KR');
+const formatPercent = (value: number): string => value.toFixed(2).replace(/\.?0+$/, '');
 
 const parseMoneyValue = (value: string): number => Number.parseInt(value.replace(/[^0-9]/g, '') || '0', 10);
 
@@ -98,12 +114,36 @@ const formatPercentInput = (input: HTMLInputElement): void => {
 
 const getMoney = (input: HTMLInputElement | null): number => parseMoneyValue(input?.value ?? '');
 const getPercent = (input: HTMLInputElement | null): number => parsePercentValue(input?.value ?? '');
+const getQuantity = (input: HTMLInputElement | null): number => Math.max(1, parseMoneyValue(input?.value ?? ''));
+const getShippingCount = (): number => Math.max(1, Math.ceil(getQuantity(purchaseQtyInput) / getQuantity(packageQtyLimitInput)));
+const isShippingDiffIncluded = (): boolean => shippingDiffMarginInput?.checked ?? false;
+const calculateShippingNetProfit = (
+  recvShipping: number,
+  sentShipping: number,
+  shippingCount: number,
+  shippingFeeRate: number,
+): number => (recvShipping * shippingCount * (1 - shippingFeeRate / 100)) - (sentShipping * shippingCount);
+
+const setFormulaLines = (lines: string[]): void => {
+  if (!formulaListNode) {
+    return;
+  }
+
+  formulaListNode.replaceChildren();
+  lines.forEach((line: string): void => {
+    const item = document.createElement('li');
+    item.textContent = line;
+    formulaListNode.append(item);
+  });
+};
 
 const calculateMargin = (): void => {
   const sellPrice = getMoney(sellPriceInput);
   const recvShipping = getMoney(recvShippingInput);
   const supplyPrice = getMoney(supplyPriceInput);
   const sentShipping = getMoney(sentShippingInput);
+  const purchaseQty = getQuantity(purchaseQtyInput);
+  const shippingCount = getShippingCount();
   const marketFeeRate = getPercent(marketFeeInput);
   const shippingFeeRate = getPercent(shippingFeeRateInput);
   const addDiscountRate = getPercent(addDiscountRateInput);
@@ -115,13 +155,15 @@ const calculateMargin = (): void => {
     + addFlatDiscount;
   const discountedSellPrice = Math.max(0, sellPrice - discountAmount);
   const displayPrice = Math.max(0, sellPrice - Math.floor(sellPrice * (instantDiscountRate / 100)));
-  const totalReceived = discountedSellPrice + recvShipping;
-  const totalCost = supplyPrice + sentShipping;
-  const feeAmount = Math.floor(discountedSellPrice * (marketFeeRate / 100))
-    + Math.floor(recvShipping * (shippingFeeRate / 100));
+  const totalDiscountedSellPrice = discountedSellPrice * purchaseQty;
+  const shippingNetProfit = calculateShippingNetProfit(recvShipping, sentShipping, shippingCount, shippingFeeRate);
+  const purchaseCost = supplyPrice * purchaseQty;
+  const feeAmount = Math.floor(totalDiscountedSellPrice * (marketFeeRate / 100));
+  const totalReceived = totalDiscountedSellPrice;
+  const totalCost = purchaseCost;
   const settlement = totalReceived - feeAmount;
-  const profit = settlement - totalCost;
-  const marginRate = discountedSellPrice > 0 ? (profit / discountedSellPrice) * 100 : 0;
+  const profit = settlement - totalCost + shippingNetProfit;
+  const marginRate = totalDiscountedSellPrice > 0 ? (profit / totalDiscountedSellPrice) * 100 : 0;
 
   if (displayPriceInput && document.activeElement !== displayPriceInput) {
     displayPriceInput.value = formatNumber(displayPrice);
@@ -129,30 +171,44 @@ const calculateMargin = (): void => {
   if (settlementNode) {
     settlementNode.textContent = formatNumber(settlement);
   }
-  if (targetProfitInput && document.activeElement !== targetProfitInput) {
-    targetProfitInput.value = formatNumber(profit);
+  if (resultProfitNode) {
+    resultProfitNode.textContent = formatNumber(profit);
   }
-  if (targetMarginRateInput && document.activeElement !== targetMarginRateInput) {
-    targetMarginRateInput.value = marginRate.toFixed(1);
+  if (resultMarginRateNode) {
+    resultMarginRateNode.textContent = marginRate.toFixed(1);
   }
+  setFormulaLines([
+    `할인 후 판매가: ${formatNumber(sellPrice)} - 즉시/부가 할인 ${formatNumber(discountAmount)} = ${formatNumber(discountedSellPrice)}원`,
+    `상품 매출: ${formatNumber(discountedSellPrice)} × 구매수량 ${formatNumber(purchaseQty)} = ${formatNumber(totalDiscountedSellPrice)}원`,
+    `플랫폼 수수료: ${formatNumber(totalDiscountedSellPrice)} × ${formatPercent(marketFeeRate)}% = ${formatNumber(feeAmount)}원`,
+    `정산금액: ${formatNumber(totalReceived)} - ${formatNumber(feeAmount)} = ${formatNumber(settlement)}원`,
+    `매입금액: ${formatNumber(supplyPrice)} × ${formatNumber(purchaseQty)} = ${formatNumber(purchaseCost)}원`,
+    `배송비 차액: (${formatNumber(recvShipping)} × ${formatNumber(shippingCount)} × (1 - ${formatPercent(shippingFeeRate)}%)) - (${formatNumber(sentShipping)} × ${formatNumber(shippingCount)}) = ${formatNumber(shippingNetProfit)}원`,
+    `판매이익: ${formatNumber(settlement)} - ${formatNumber(totalCost)} + ${formatNumber(shippingNetProfit)} = ${formatNumber(profit)}원`,
+    `마진율: ${formatNumber(profit)} ÷ ${formatNumber(totalDiscountedSellPrice)} × 100 = ${marginRate.toFixed(1)}%`,
+  ]);
 };
 
 const calculateSellPriceByTargetProfit = (targetProfit: number): void => {
   const recvShipping = getMoney(recvShippingInput);
   const supplyPrice = getMoney(supplyPriceInput);
   const sentShipping = getMoney(sentShippingInput);
+  const purchaseQty = getQuantity(purchaseQtyInput);
+  const shippingCount = getShippingCount();
+  const shippingDiffIncluded = isShippingDiffIncluded();
   const marketFeeRate = getPercent(marketFeeInput);
   const shippingFeeRate = getPercent(shippingFeeRateInput);
   const addDiscountRate = getPercent(addDiscountRateInput);
   const addFlatDiscount = getMoney(addFlatDiscountInput);
   const instantDiscountRate = getPercent(instantDiscountRateInput);
-  const shippingNetProfit = recvShipping * (1 - shippingFeeRate / 100) - supplyPrice - sentShipping;
+  const shippingNetProfit = shippingDiffIncluded ? calculateShippingNetProfit(recvShipping, sentShipping, shippingCount, shippingFeeRate) : 0;
+  const purchaseCost = supplyPrice * purchaseQty;
   const marketDenominator = 1 - marketFeeRate / 100;
   const discountDenominator = 1 - (instantDiscountRate + addDiscountRate) / 100;
 
   let discountedSellPrice = 0;
-  if (marketDenominator !== 0) {
-    discountedSellPrice = (targetProfit - shippingNetProfit) / marketDenominator;
+  if (marketDenominator !== 0 && purchaseQty > 0) {
+    discountedSellPrice = (targetProfit - shippingNetProfit + purchaseCost) / (marketDenominator * purchaseQty);
   }
 
   let sellPrice = 0;
@@ -170,18 +226,22 @@ const calculateSellPriceByTargetRate = (targetRate: number): void => {
   const recvShipping = getMoney(recvShippingInput);
   const supplyPrice = getMoney(supplyPriceInput);
   const sentShipping = getMoney(sentShippingInput);
+  const purchaseQty = getQuantity(purchaseQtyInput);
+  const shippingCount = getShippingCount();
+  const shippingDiffIncluded = isShippingDiffIncluded();
   const marketFeeRate = getPercent(marketFeeInput);
   const shippingFeeRate = getPercent(shippingFeeRateInput);
   const addDiscountRate = getPercent(addDiscountRateInput);
   const addFlatDiscount = getMoney(addFlatDiscountInput);
   const instantDiscountRate = getPercent(instantDiscountRateInput);
-  const shippingNetProfit = recvShipping * (1 - shippingFeeRate / 100) - supplyPrice - sentShipping;
+  const shippingNetProfit = shippingDiffIncluded ? calculateShippingNetProfit(recvShipping, sentShipping, shippingCount, shippingFeeRate) : 0;
+  const purchaseCost = supplyPrice * purchaseQty;
   const discountedDenominator = 1 - (marketFeeRate + targetRate) / 100;
   const discountDenominator = 1 - (instantDiscountRate + addDiscountRate) / 100;
 
   let discountedSellPrice = 0;
-  if (discountedDenominator !== 0) {
-    discountedSellPrice = -shippingNetProfit / discountedDenominator;
+  if (discountedDenominator !== 0 && purchaseQty > 0) {
+    discountedSellPrice = (purchaseCost - shippingNetProfit) / (discountedDenominator * purchaseQty);
   }
 
   let sellPrice = 0;
@@ -200,6 +260,20 @@ moneyInputs.forEach((input: HTMLInputElement): void => {
   formatMoneyInput(input);
   input.addEventListener('input', (): void => {
     formatMoneyInput(input);
+    if (input === sellPriceInput) {
+      targetMode = null;
+      calculateMargin();
+      return;
+    }
+
+    recalculateByTargetMode();
+  });
+});
+
+quantityInputs.forEach((input: HTMLInputElement): void => {
+  formatMoneyInput(input);
+  input.addEventListener('input', (): void => {
+    formatMoneyInput(input);
     calculateMargin();
   });
 });
@@ -207,19 +281,75 @@ moneyInputs.forEach((input: HTMLInputElement): void => {
 percentInputs.forEach((input: HTMLInputElement): void => {
   input.addEventListener('input', (): void => {
     formatPercentInput(input);
-    calculateMargin();
+    recalculateByTargetMode();
   });
 });
 
-targetProfitInput?.addEventListener('input', (): void => {
-  formatSignedMoneyInput(targetProfitInput);
-  calculateSellPriceByTargetProfit(parseSignedMoneyValue(targetProfitInput.value));
-});
+const recalculateByTargetMode = (): void => {
+  if (targetMode === 'profit' && targetProfitInput) {
+    calculateSellPriceByTargetProfit(parseSignedMoneyValue(targetProfitInput.value));
+    return;
+  }
 
-targetMarginRateInput?.addEventListener('input', (): void => {
+  if (targetMode === 'rate' && targetMarginRateInput) {
+    calculateSellPriceByTargetRate(parsePercentValue(targetMarginRateInput.value));
+    return;
+  }
+
+  calculateMargin();
+};
+
+shippingDiffMarginInput?.addEventListener('change', recalculateByTargetMode);
+
+const applyTargetProfit = (): void => {
+  if (!targetProfitInput) {
+    return;
+  }
+
+  targetMode = 'profit';
+  formatSignedMoneyInput(targetProfitInput);
+  if (targetMarginRateInput) {
+    targetMarginRateInput.value = '0';
+  }
+  calculateSellPriceByTargetProfit(parseSignedMoneyValue(targetProfitInput.value));
+};
+
+const applyTargetRate = (): void => {
+  if (!targetMarginRateInput) {
+    return;
+  }
+
+  targetMode = 'rate';
   formatPercentInput(targetMarginRateInput);
+  if (targetProfitInput) {
+    targetProfitInput.value = '0';
+  }
   calculateSellPriceByTargetRate(parsePercentValue(targetMarginRateInput.value));
-});
+};
+
+const handleTargetEnter = (event: KeyboardEvent): void => {
+  if (event.key !== 'Enter') {
+    return;
+  }
+
+  event.preventDefault();
+  if (event.currentTarget === targetProfitInput) {
+    applyTargetProfit();
+    return;
+  }
+
+  if (event.currentTarget === targetMarginRateInput) {
+    applyTargetRate();
+  }
+};
+
+targetProfitInput?.addEventListener('input', applyTargetProfit);
+targetProfitInput?.addEventListener('change', applyTargetProfit);
+targetProfitInput?.addEventListener('keydown', handleTargetEnter);
+
+targetMarginRateInput?.addEventListener('input', applyTargetRate);
+targetMarginRateInput?.addEventListener('change', applyTargetRate);
+targetMarginRateInput?.addEventListener('keydown', handleTargetEnter);
 
 displayPriceInput?.addEventListener('input', (): void => {
   formatMoneyInput(displayPriceInput);
@@ -259,12 +389,19 @@ const applySelectedPlatform = (): void => {
 platformSelect?.addEventListener('change', applySelectedPlatform);
 
 resetButton?.addEventListener('click', (): void => {
+  targetMode = null;
   moneyInputs.forEach((input: HTMLInputElement): void => {
     input.value = '';
+  });
+  quantityInputs.forEach((input: HTMLInputElement): void => {
+    input.value = '1';
   });
   percentInputs.forEach((input: HTMLInputElement): void => {
     input.value = '';
   });
+  if (shippingDiffMarginInput) {
+    shippingDiffMarginInput.checked = false;
+  }
   if (marketFeeInput) {
     marketFeeInput.value = document.body.dataset.defaultMarketFee || '0';
   }
@@ -293,10 +430,12 @@ applyButton?.addEventListener('click', (): void => {
     supplyPrice: getMoney(supplyPriceInput),
     shippingFee: getMoney(recvShippingInput),
     actualShippingFee: getMoney(sentShippingInput),
+    shippingQtyLimit: getQuantity(packageQtyLimitInput),
     targetSelector,
     supplyTargetSelector,
     shippingTargetSelector,
     actualShippingTargetSelector,
+    shippingQtyLimitTargetSelector,
   };
   window.parent.postMessage(message, window.location.origin);
 });
