@@ -26,6 +26,7 @@ class GoodsRegisterSetting
     'image_min_width' => 600,
     'image_min_height' => 600,
     'image_max_upload_mb' => 20,
+    'thumbnail_enabled' => 'Y',
     'thumb_list_fit' => 'CONTAIN',
     'thumb_list_size' => 600,
     'thumb_detail_fit' => 'CONTAIN',
@@ -34,6 +35,10 @@ class GoodsRegisterSetting
     'thumb_detail_list_size' => 300,
     'thumb_etc_list_fit' => 'CONTAIN',
     'thumb_etc_list_size' => 120,
+    'platform_image_enabled' => 'Y',
+    'platform_image_width' => 1000,
+    'platform_image_height' => 1000,
+    'platform_image_small_fit' => 'CONTAIN',
     'extra_shipping_jeju' => 0,
     'extra_shipping_island' => 0,
     'return_shipping_fee' => 2500,
@@ -56,6 +61,7 @@ class GoodsRegisterSetting
     'image_min_width' => ['value_type' => 'int', 'description' => '원본 최소 가로 크기'],
     'image_min_height' => ['value_type' => 'int', 'description' => '원본 최소 세로 크기'],
     'image_max_upload_mb' => ['value_type' => 'int', 'description' => '원본 업로드 허용 용량'],
+    'thumbnail_enabled' => ['value_type' => 'string', 'description' => '썸네일 자동 생성 사용 여부'],
     'thumb_list_fit' => ['value_type' => 'string', 'description' => '목록이미지 노출방법'],
     'thumb_list_size' => ['value_type' => 'int', 'description' => '목록이미지 기준 크기'],
     'thumb_detail_fit' => ['value_type' => 'string', 'description' => '상세이미지 노출방법'],
@@ -64,6 +70,10 @@ class GoodsRegisterSetting
     'thumb_detail_list_size' => ['value_type' => 'int', 'description' => '상세목록이미지 기준 크기'],
     'thumb_etc_list_fit' => ['value_type' => 'string', 'description' => '기타목록이미지 노출방법'],
     'thumb_etc_list_size' => ['value_type' => 'int', 'description' => '기타목록이미지 기준 크기'],
+    'platform_image_enabled' => ['value_type' => 'string', 'description' => '플랫폼용 이미지 생성 여부'],
+    'platform_image_width' => ['value_type' => 'int', 'description' => '플랫폼용 이미지 가로 크기'],
+    'platform_image_height' => ['value_type' => 'int', 'description' => '플랫폼용 이미지 세로 크기'],
+    'platform_image_small_fit' => ['value_type' => 'string', 'description' => '플랫폼용 이미지 생성 방식'],
     'extra_shipping_jeju' => ['value_type' => 'int', 'description' => '제주 추가 배송비'],
     'extra_shipping_island' => ['value_type' => 'int', 'description' => '도서산간 추가 배송비'],
     'return_shipping_fee' => ['value_type' => 'int', 'description' => '반품 배송비'],
@@ -196,6 +206,11 @@ class GoodsRegisterSetting
       $normalized[$field] = $result['value'];
     }
 
+    $thumbnailEnabled = (string) ($data['thumbnail_enabled'] ?? 'N');
+    if (!in_array($thumbnailEnabled, self::YES_NO_VALUES, true)) {
+      return $this->fail('썸네일 사용 여부를 올바르게 선택해 주세요.', 'thumbnail_enabled');
+    }
+    $normalized['thumbnail_enabled'] = $thumbnailEnabled;
 
     foreach ([
       'thumb_list_size' => '목록이미지 기준 크기는 50~3000px로 입력해 주세요.',
@@ -222,6 +237,29 @@ class GoodsRegisterSetting
       }
       $normalized[$field] = $value;
     }
+
+    $platformImageEnabled = (string) ($data['platform_image_enabled'] ?? 'N');
+    if (!in_array($platformImageEnabled, self::YES_NO_VALUES, true)) {
+      return $this->fail('플랫폼용 이미지 생성 여부를 올바르게 선택해 주세요.', 'platform_image_enabled');
+    }
+    $normalized['platform_image_enabled'] = $platformImageEnabled;
+
+    foreach ([
+      'platform_image_width' => '플랫폼용 이미지 가로는 50~5000px로 입력해 주세요.',
+      'platform_image_height' => '플랫폼용 이미지 세로는 50~5000px로 입력해 주세요.',
+    ] as $field => $message) {
+      $result = $this->normalizeInt($data, $field, $message, $field, 50, 5000);
+      if (($result['success'] ?? false) !== true) {
+        return $result;
+      }
+      $normalized[$field] = $result['value'];
+    }
+
+    $platformImageSmallFit = (string) ($data['platform_image_small_fit'] ?? '');
+    if (!in_array($platformImageSmallFit, self::THUMBNAIL_FITS, true)) {
+      return $this->fail('플랫폼용 이미지 생성 방식을 올바르게 선택해 주세요.', 'platform_image_small_fit');
+    }
+    $normalized['platform_image_small_fit'] = $platformImageSmallFit;
 
     $shippingType = (string) ($data['default_shipping_type'] ?? '');
     if (!in_array($shippingType, self::SHIPPING_TYPES, true)) {
@@ -282,12 +320,14 @@ class GoodsRegisterSetting
     $data['rounding_type'] = in_array((string) $data['rounding_type'], self::ROUNDING_TYPES, true) ? (string) $data['rounding_type'] : self::DEFAULTS['rounding_type'];
     $data['block_under_supply_price'] = in_array((string) $data['block_under_supply_price'], self::YES_NO_VALUES, true) ? (string) $data['block_under_supply_price'] : self::DEFAULTS['block_under_supply_price'];
     $data['default_shipping_type'] = in_array((string) $data['default_shipping_type'], self::SHIPPING_TYPES, true) ? (string) $data['default_shipping_type'] : self::DEFAULTS['default_shipping_type'];
+    $data['thumbnail_enabled'] = in_array((string) $data['thumbnail_enabled'], self::YES_NO_VALUES, true) ? (string) $data['thumbnail_enabled'] : self::DEFAULTS['thumbnail_enabled'];
+    $data['platform_image_enabled'] = in_array((string) $data['platform_image_enabled'], self::YES_NO_VALUES, true) ? (string) $data['platform_image_enabled'] : self::DEFAULTS['platform_image_enabled'];
     $data['margin_rate'] = is_numeric($data['margin_rate']) ? (float) $data['margin_rate'] : self::DEFAULTS['margin_rate'];
-    foreach (['shipping_fee', 'actual_shipping_fee', 'shipping_qty_limit', 'max_image_count', 'max_option_count', 'max_text_option_count', 'image_min_width', 'image_min_height', 'image_max_upload_mb', 'thumb_list_size', 'thumb_detail_size', 'thumb_detail_list_size', 'thumb_etc_list_size', 'extra_shipping_jeju', 'extra_shipping_island', 'return_shipping_fee', 'exchange_shipping_fee'] as $field) {
+    foreach (['shipping_fee', 'actual_shipping_fee', 'shipping_qty_limit', 'max_image_count', 'max_option_count', 'max_text_option_count', 'image_min_width', 'image_min_height', 'image_max_upload_mb', 'thumb_list_size', 'thumb_detail_size', 'thumb_detail_list_size', 'thumb_etc_list_size', 'platform_image_width', 'platform_image_height', 'extra_shipping_jeju', 'extra_shipping_island', 'return_shipping_fee', 'exchange_shipping_fee'] as $field) {
       $data[$field] = is_numeric($data[$field]) ? (int) $data[$field] : self::DEFAULTS[$field];
     }
 
-    foreach (['thumb_list_fit', 'thumb_detail_fit', 'thumb_detail_list_fit', 'thumb_etc_list_fit'] as $field) {
+    foreach (['thumb_list_fit', 'thumb_detail_fit', 'thumb_detail_list_fit', 'thumb_etc_list_fit', 'platform_image_small_fit'] as $field) {
       $data[$field] = in_array((string) $data[$field], self::THUMBNAIL_FITS, true) ? (string) $data[$field] : self::DEFAULTS[$field];
     }
 
@@ -301,6 +341,8 @@ class GoodsRegisterSetting
     foreach (['thumb_list_size', 'thumb_detail_size', 'thumb_detail_list_size', 'thumb_etc_list_size'] as $field) {
       $data[$field] = min(3000, max(50, (int) $data[$field]));
     }
+    $data['platform_image_width'] = min(5000, max(50, (int) $data['platform_image_width']));
+    $data['platform_image_height'] = min(5000, max(50, (int) $data['platform_image_height']));
     $data['shipping_qty_limit'] = max(0, (int) $data['shipping_qty_limit']);
 
     return $data;

@@ -123,6 +123,16 @@
       </div>
       <div class="admin-setting-goods-register-body" data-admin-collapsible-content>
         <div class="admin-form-row">
+          <span class="admin-form-label">썸네일</span>
+          <div class="admin-form-content">
+            <div class="admin-goods-register-radio-group admin-setting-goods-register-thumbnail-radio" role="radiogroup" aria-label="썸네일 사용 여부">
+              <label class="admin-goods-register-radio"><input type="radio" name="thumbnail_enabled" value="Y" {{ is_checked(config.thumbnail_enabled|default('Y'), 'Y') }}><span>사용</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="thumbnail_enabled" value="N" {{ is_checked(config.thumbnail_enabled|default('Y'), 'N') }}><span>사용안함</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-form-row" data-setting-thumbnail-row>
           <span class="admin-form-label">원본 최소 사이즈</span>
           <div class="admin-form-content admin-setting-goods-register-size-row">
             <label class="admin-setting-goods-register-size-field" for="image_min_width"><span>가로</span><span class="admin-goods-register-unit-input"><input id="image_min_width" name="image_min_width" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_min_width }}"><span class="admin-goods-register-unit">px</span></span></label>
@@ -131,13 +141,7 @@
           </div>
         </div>
 
-        <div class="admin-form-row">
-          <label class="admin-form-label" for="image_max_upload_mb">업로드 허용용량</label>
-          <div class="admin-form-content admin-setting-goods-register-upload-size-control">
-            <span class="admin-goods-register-unit-input"><input id="image_max_upload_mb" name="image_max_upload_mb" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_max_upload_mb }}"><span class="admin-goods-register-unit">MB</span></span>
-          </div>
-        </div>
-        <div class="admin-form-row">
+        <div class="admin-form-row" data-setting-thumbnail-row>
           <span class="admin-form-label">썸네일 항목</span>
           <div class="admin-form-content admin-setting-goods-register-thumb-grid">
             <label class="admin-setting-goods-register-thumb-field" for="thumb_list_size">
@@ -148,6 +152,7 @@
                   <option value="CONTAIN" {{ is_selected(config.thumb_list_fit, 'CONTAIN') }}>contain</option>
                   <option value="COVER" {{ is_selected(config.thumb_list_fit, 'COVER') }}>cover</option>
                 </select>
+                <span class="admin-setting-goods-register-thumb-ratio-note" data-thumb-cover-height-note="thumb_list"></span>
               </div>
             </label>
             <label class="admin-setting-goods-register-thumb-field" for="thumb_detail_size">
@@ -158,6 +163,7 @@
                   <option value="CONTAIN" {{ is_selected(config.thumb_detail_fit, 'CONTAIN') }}>contain</option>
                   <option value="COVER" {{ is_selected(config.thumb_detail_fit, 'COVER') }}>cover</option>
                 </select>
+                <span class="admin-setting-goods-register-thumb-ratio-note" data-thumb-cover-height-note="thumb_detail"></span>
               </div>
             </label>
             <label class="admin-setting-goods-register-thumb-field" for="thumb_detail_list_size">
@@ -168,6 +174,7 @@
                   <option value="CONTAIN" {{ is_selected(config.thumb_detail_list_fit, 'CONTAIN') }}>contain</option>
                   <option value="COVER" {{ is_selected(config.thumb_detail_list_fit, 'COVER') }}>cover</option>
                 </select>
+                <span class="admin-setting-goods-register-thumb-ratio-note" data-thumb-cover-height-note="thumb_detail_list"></span>
               </div>
             </label>
             <label class="admin-setting-goods-register-thumb-field" for="thumb_etc_list_size">
@@ -178,12 +185,44 @@
                   <option value="CONTAIN" {{ is_selected(config.thumb_etc_list_fit, 'CONTAIN') }}>contain</option>
                   <option value="COVER" {{ is_selected(config.thumb_etc_list_fit, 'COVER') }}>cover</option>
                 </select>
+                <span class="admin-setting-goods-register-thumb-ratio-note" data-thumb-cover-height-note="thumb_etc_list"></span>
               </div>
             </label>
           </div>
         </div>
 
-        <p class="admin-setting-goods-register-image-help">※ 원본은 최소 사이즈만 검증하고 비율은 유지합니다.<br/>※ 썸네일 노출은 종류별 contain/cover로 설정합니다.<br/>※ contain - 이미지를 잘리지 않게 전체 표시하고 남는 공간은 여백으로 채웁니다.<br/>※ cover - 영역을 채우도록 표시하고 넘치는 부분은 잘라냅니다.</p>
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="image_max_upload_mb">업로드 허용용량</label>
+          <div class="admin-form-content admin-setting-goods-register-upload-size-control">
+            <span class="admin-goods-register-unit-input"><input id="image_max_upload_mb" name="image_max_upload_mb" type="text" inputmode="numeric" class="admin-input" value="{{ config.image_max_upload_mb }}"><span class="admin-goods-register-unit">MB</span></span>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <span class="admin-form-label">플랫폼용 이미지</span>
+          <div class="admin-form-content admin-setting-goods-register-platform-control">
+            <div class="admin-goods-register-radio-group admin-setting-goods-register-platform-radio" role="radiogroup" aria-label="플랫폼용 이미지 생성 여부">
+              <label class="admin-goods-register-radio"><input type="radio" name="platform_image_enabled" value="Y" {{ is_checked(config.platform_image_enabled, 'Y') }}><span>생성함</span></label>
+              <label class="admin-goods-register-radio"><input type="radio" name="platform_image_enabled" value="N" {{ is_checked(config.platform_image_enabled, 'N') }}><span>생성안함</span></label>
+            </div>
+            <div class="admin-setting-goods-register-platform-fields" data-setting-platform-image-row>
+              <div class="admin-setting-goods-register-size-row">
+                <label class="admin-setting-goods-register-size-field" for="platform_image_width"><span>가로</span><span class="admin-goods-register-unit-input"><input id="platform_image_width" name="platform_image_width" type="text" inputmode="numeric" class="admin-input" value="{{ config.platform_image_width|default(1000) }}"><span class="admin-goods-register-unit">px</span></span></label>
+                <svg class="admin-setting-goods-register-size-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+                <label class="admin-setting-goods-register-size-field" for="platform_image_height"><span>세로</span><span class="admin-goods-register-unit-input"><input id="platform_image_height" name="platform_image_height" type="text" inputmode="numeric" class="admin-input" value="{{ config.platform_image_height|default(1000) }}"><span class="admin-goods-register-unit">px</span></span></label>
+              </div>
+              <label class="admin-setting-goods-register-platform-fit" for="platform_image_small_fit">
+                <span>생성 방식</span>
+                <select id="platform_image_small_fit" name="platform_image_small_fit" class="admin-input admin-setting-goods-register-thumb-fit-select">
+                  <option value="CONTAIN" {{ is_selected(config.platform_image_small_fit|default('CONTAIN'), 'CONTAIN') }}>contain</option>
+                  <option value="COVER" {{ is_selected(config.platform_image_small_fit|default('CONTAIN'), 'COVER') }}>cover</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <p class="admin-setting-goods-register-image-help">※ 썸네일 사용안함이면 상품등록 화면에서 이미지별 파일을 직접 등록합니다.<br/>※ 썸네일 사용함이면 원본 최소 사이즈를 검증하고 설정값 기준으로 썸네일을 생성합니다.<br/>※ 원본 최소 기준이 정사각 사이즈이면 가로 또는 세로 중 한 변만 기준 이상이어도 등록 가능합니다.<br/>※ 원본 최소 기준이 정사각 사이즈가 아니면 가로와 세로 기준을 각각 적용하며 원본 비율은 유지합니다.<br/>※ 썸네일 노출은 종류별 contain/cover로 설정합니다.<br/>※ 플랫폼용 이미지는 설정한 가로 x 세로와 contain/cover 생성 방식 기준으로 생성합니다.</p>
       </div>
     </section>
 

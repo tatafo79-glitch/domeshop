@@ -21,6 +21,7 @@ $RECYCLE.BIN/
 .wget-hsts
 .local/
 scripts/
+.codebase-memory/
 
 # IDEs and Editors
 .vscode/

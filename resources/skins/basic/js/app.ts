@@ -1046,6 +1046,64 @@ if (document.readyState === 'loading') {
   initAdminGoodsRegisterSettingShippingRows();
 }
 
+const syncAdminGoodsRegisterSettingPlatformImageRows = (): void => {
+  const isEnabled = document.querySelector<HTMLInputElement>('input[name="platform_image_enabled"]:checked')?.value === 'Y';
+  document.querySelectorAll<HTMLElement>('[data-setting-platform-image-row]').forEach((row: HTMLElement): void => {
+    row.hidden = !isEnabled;
+  });
+};
+
+const initAdminGoodsRegisterSettingPlatformImageRows = (): void => {
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[name="platform_image_enabled"]');
+  if (inputs.length === 0) {
+    return;
+  }
+
+  inputs.forEach((input: HTMLInputElement): void => {
+    input.addEventListener('change', syncAdminGoodsRegisterSettingPlatformImageRows);
+  });
+
+  syncAdminGoodsRegisterSettingPlatformImageRows();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminGoodsRegisterSettingPlatformImageRows);
+} else {
+  initAdminGoodsRegisterSettingPlatformImageRows();
+}
+
+const syncAdminGoodsRegisterSettingThumbnailRows = (): void => {
+  const isEnabled = document.querySelector<HTMLInputElement>('input[name="thumbnail_enabled"]:checked')?.value !== 'N';
+  document.querySelectorAll<HTMLElement>('[data-setting-thumbnail-row]').forEach((row: HTMLElement): void => {
+    row.hidden = !isEnabled;
+  });
+};
+
+const initAdminGoodsRegisterSettingThumbnailRows = (): void => {
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[name="thumbnail_enabled"]');
+  if (inputs.length === 0) {
+    return;
+  }
+
+  inputs.forEach((input: HTMLInputElement): void => {
+    input.addEventListener('change', (): void => {
+      syncAdminGoodsRegisterSettingThumbnailRows();
+      const form = input.closest('form');
+      if (form instanceof HTMLFormElement) {
+        syncAdminGoodsThumbCoverHeightNotes(form);
+      }
+    });
+  });
+
+  syncAdminGoodsRegisterSettingThumbnailRows();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAdminGoodsRegisterSettingThumbnailRows);
+} else {
+  initAdminGoodsRegisterSettingThumbnailRows();
+}
+
 interface AdminSettingSaveResponse {
   success: boolean;
   message?: string;
@@ -1117,7 +1175,57 @@ const syncAdminGoodsImageSettingFields = (form: HTMLFormElement): void => {
   });
 };
 
-const initAdminGoodsImageDimensionFields = (_form: HTMLFormElement): void => {
+const parseAdminGoodsSettingPositiveInt = (input: HTMLInputElement | null): number | null => {
+  if (!input) {
+    return null;
+  }
+
+  const value = Number.parseInt(stripAdminSettingNumber(input.value).replace(/[^0-9]/g, ''), 10);
+
+  return Number.isFinite(value) && value > 0 ? value : null;
+};
+
+const ADMIN_GOODS_THUMB_RATIO_FIELDS = ['thumb_list', 'thumb_detail', 'thumb_detail_list', 'thumb_etc_list'] as const;
+
+type AdminGoodsThumbRatioField = typeof ADMIN_GOODS_THUMB_RATIO_FIELDS[number];
+
+const syncAdminGoodsThumbCoverHeightNotes = (form: HTMLFormElement): void => {
+  const isThumbnailEnabled = form.querySelector<HTMLInputElement>('input[name="thumbnail_enabled"]:checked')?.value !== 'N';
+  const minWidth = parseAdminGoodsSettingPositiveInt(form.querySelector<HTMLInputElement>('#image_min_width'));
+  const minHeight = parseAdminGoodsSettingPositiveInt(form.querySelector<HTMLInputElement>('#image_min_height'));
+
+  ADMIN_GOODS_THUMB_RATIO_FIELDS.forEach((fieldName: AdminGoodsThumbRatioField): void => {
+    const note = form.querySelector<HTMLElement>(`[data-thumb-cover-height-note="${fieldName}"]`);
+    if (!note) {
+      return;
+    }
+
+    const thumbWidth = parseAdminGoodsSettingPositiveInt(form.querySelector<HTMLInputElement>(`#${fieldName}_size`));
+    const fit = form.querySelector<HTMLSelectElement>(`#${fieldName}_fit`)?.value ?? '';
+
+    if (!isThumbnailEnabled || !minWidth || !minHeight || !thumbWidth || minWidth === minHeight || fit !== 'COVER') {
+      note.hidden = true;
+      note.textContent = '';
+      return;
+    }
+
+    const expectedHeight = Math.max(1, Math.round(thumbWidth * (minHeight / minWidth)));
+    note.hidden = false;
+    note.textContent = `예상 세로 ${expectedHeight}px`;
+  });
+};
+
+const initAdminGoodsImageDimensionFields = (form: HTMLFormElement): void => {
+  ['image_min_width', 'image_min_height'].forEach((fieldName: string): void => {
+    form.querySelector<HTMLInputElement>(`#${fieldName}`)?.addEventListener('input', (): void => syncAdminGoodsThumbCoverHeightNotes(form));
+  });
+
+  ADMIN_GOODS_THUMB_RATIO_FIELDS.forEach((fieldName: AdminGoodsThumbRatioField): void => {
+    form.querySelector<HTMLInputElement>(`#${fieldName}_size`)?.addEventListener('input', (): void => syncAdminGoodsThumbCoverHeightNotes(form));
+    form.querySelector<HTMLSelectElement>(`#${fieldName}_fit`)?.addEventListener('change', (): void => syncAdminGoodsThumbCoverHeightNotes(form));
+  });
+
+  syncAdminGoodsThumbCoverHeightNotes(form);
 };
 
 const createAdminSettingFormData = (form: HTMLFormElement): FormData => {
@@ -1191,7 +1299,10 @@ const initAdminGoodsRegisterSettingForm = (): void => {
   form.addEventListener('reset', (): void => {
     window.setTimeout((): void => {
       syncAdminGoodsRegisterSettingShippingRows();
+      syncAdminGoodsRegisterSettingPlatformImageRows();
+      syncAdminGoodsRegisterSettingThumbnailRows();
       syncAdminGoodsImageSettingFields(form);
+      syncAdminGoodsThumbCoverHeightNotes(form);
       syncAllAdminGoodsRadioIndicators();
     }, 0);
   });

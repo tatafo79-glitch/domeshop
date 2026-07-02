@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>상품 이미지 처리 예시 - 현재 설정</title>
+  <style>
+    :root { --canvas:#f6f8fb; --surface:#fff; --border:#dbe3ef; --ink:#172033; --muted:#64748b; --blue:#2563eb; --success:#15803d; --danger:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size:14px; line-height:1.5; }
+    .image-test-page { width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:32px 0 48px; }
+    .image-test-header { display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+    .image-test-title { margin:0; font-size:22px; font-weight:700; letter-spacing:0; }
+    .image-test-desc, .image-test-meta, .image-test-note { font-size:13px; }
+    .image-test-desc { margin:0; color:var(--muted); }
+    .image-test-panel { border:1px solid var(--border); background:var(--surface); }
+    .image-test-settings { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); margin-bottom:24px; }
+    .image-test-summary { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); margin-bottom:20px; }
+    .image-test-summary-item, .image-test-setting-item { border-right:1px solid var(--border); padding:16px; }
+    .image-test-summary-item:last-child, .image-test-setting-item:last-child { border-right:0; }
+    .image-test-summary-label, .image-test-setting-label { display:block; color:var(--muted); font-size:13px; }
+    .image-test-summary-value, .image-test-setting-value { display:block; margin-top:4px; font-size:15px; font-weight:700; }
+    .image-test-status-pass { color:var(--success); }
+    .image-test-status-fail { color:var(--danger); }
+    .image-test-example-title { margin:28px 0 12px; font-size:17px; font-weight:700; }
+    .image-test-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 540px), 1fr)); gap:16px; }
+    .image-test-card { overflow:hidden; }
+    .image-test-card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--border); padding:14px 16px; }
+    .image-test-card-title { margin:0; font-size:15px; font-weight:700; }
+    .image-test-card-type { color:var(--blue); font-size:13px; font-weight:700; text-transform:uppercase; }
+    .image-test-preview { display:grid; min-height:278px; place-items:center; padding:16px; background:linear-gradient(45deg, #eef2f7 25%, transparent 25%), linear-gradient(-45deg, #eef2f7 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eef2f7 75%), linear-gradient(-45deg, transparent 75%, #eef2f7 75%); background-color:#fff; background-position:0 0, 0 8px, 8px -8px, -8px 0; background-size:16px 16px; }
+    .image-test-display-box { display:grid; width:min(var(--display-width), 100%); height:min(var(--display-height), calc(100vw - 64px)); place-items:center; overflow:hidden; outline:1px solid rgba(15, 23, 42, .14); background:#fff; }
+    .image-test-display-box img { display:block; width:100%; height:100%; }
+    .image-test-display-box.is-contain img { object-fit:contain; }
+    .image-test-display-box.is-cover img { object-fit:cover; }
+    .image-test-original img, .image-test-platform img { display:block; max-width:100%; max-height:240px; border:1px solid rgba(15, 23, 42, .14); background:#fff; }
+    .image-test-meta { display:grid; gap:6px; padding:14px 16px 16px; color:var(--muted); }
+    .image-test-meta strong { color:var(--ink); font-weight:700; }
+    .image-test-note { margin:20px 0 0; border-left:3px solid var(--blue); background:#eff6ff; padding:14px 16px; color:#1e3a8a; }
+    @media (max-width:900px) { .image-test-settings, .image-test-summary, .image-test-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } .image-test-setting-item, .image-test-summary-item { border-bottom:1px solid var(--border); } .image-test-setting-item:nth-child(2n), .image-test-summary-item:nth-child(2n) { border-right:0; } }
+    @media (max-width:640px) { .image-test-page { width:min(100% - 20px, 1180px); padding-top:20px; } .image-test-settings, .image-test-summary, .image-test-grid { grid-template-columns:1fr; } .image-test-setting-item, .image-test-summary-item, .image-test-setting-item:nth-child(2n), .image-test-summary-item:nth-child(2n) { border-right:0; } }
+  </style>
+</head>
+<body>
+  <main class="image-test-page">
+    <header class="image-test-header">
+      <h1 class="image-test-title">상품 이미지 처리 예시 - 현재 설정</h1>
+      <p class="image-test-desc">.env DB 연결로 읽은 현재 등록설정 기준입니다. 썸네일 파일은 원본 비율을 유지해 가로 기준으로 생성하고, 화면 박스 세로는 상품등록 설정 화면과 같은 원본 최소 비율 기준 예상 세로로 표시합니다.</p>
+    </header>
+    <section class="image-test-panel image-test-settings" aria-label="현재 이미지 설정">
+      <div class="image-test-setting-item"><span class="image-test-setting-label">원본 검증</span><span class="image-test-setting-value">600 x 750px / 20MB</span></div>
+      <div class="image-test-setting-item"><span class="image-test-setting-label">목록이미지</span><span class="image-test-setting-value">300px / cover</span></div>
+      <div class="image-test-setting-item"><span class="image-test-setting-label">상세이미지</span><span class="image-test-setting-value">500px / cover</span></div>
+      <div class="image-test-setting-item"><span class="image-test-setting-label">상세목록 / 기타목록</span><span class="image-test-setting-value">50px / 80px</span></div>
+      <div class="image-test-setting-item"><span class="image-test-setting-label">플랫폼용 이미지</span><span class="image-test-setting-value">700 x 1000px / cover 생성</span></div>
+    </section>
+    <h2 class="image-test-example-title">예시 1: test01.jpg</h2>
+    <section class="image-test-panel image-test-summary" aria-label="test01 원본 검증 요약">
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 파일</span><span class="image-test-summary-value">test01.jpg</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 크기</span><span class="image-test-summary-value">600 x 600px</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 기준</span><span class="image-test-summary-value">가로 600px 이상, 세로 750px 이상 / 20MB</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 결과</span><span class="image-test-summary-value image-test-status-fail">등록 불가</span></div>
+    </section>
+    <section class="image-test-grid" aria-label="test01 이미지 처리 결과">
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">원본 이미지</h2><span class="image-test-card-type">Original</span></div>
+        <div class="image-test-preview image-test-original"><img src="/test2_assets/test01.jpg" alt="test01 원본 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01.jpg</span><span><strong>파일 크기</strong> 600 x 600px</span><span><strong>처리 방식</strong> 원본 비율 유지, 현재 최소 기준 검증</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:300px; --display-height:375px"><img src="/test2_assets/test01-list.jpg" alt="test01 목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01-list.jpg</span><span><strong>파일 크기</strong> 300 x 300px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 300px 가로일 때 375px</span><span><strong>표시 방식</strong> 300 x 375px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:500px; --display-height:625px"><img src="/test2_assets/test01-detail.jpg" alt="test01 상세이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01-detail.jpg</span><span><strong>파일 크기</strong> 500 x 500px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 500px 가로일 때 625px</span><span><strong>표시 방식</strong> 500 x 625px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:50px; --display-height:63px"><img src="/test2_assets/test01-detail-list.jpg" alt="test01 상세목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01-detail-list.jpg</span><span><strong>파일 크기</strong> 50 x 50px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 50px 가로일 때 63px</span><span><strong>표시 방식</strong> 50 x 63px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">기타목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:80px; --display-height:100px"><img src="/test2_assets/test01-etc-list.jpg" alt="test01 기타목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01-etc-list.jpg</span><span><strong>파일 크기</strong> 80 x 80px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 80px 가로일 때 100px</span><span><strong>표시 방식</strong> 80 x 100px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">플랫폼용 이미지</h2><span class="image-test-card-type">Generated</span></div>
+        <div class="image-test-preview image-test-platform"><img src="/test2_assets/test01-platform.jpg" alt="test01 플랫폼용 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test01-platform.jpg</span><span><strong>파일 크기</strong> 700 x 1000px</span><span><strong>표시 방식</strong> object-fit 없이 생성 파일 그대로 표시</span></div>
+      </article>
+    </section>
+    <h2 class="image-test-example-title">예시 2: test02.jpg</h2>
+    <section class="image-test-panel image-test-summary" aria-label="test02 원본 검증 요약">
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 파일</span><span class="image-test-summary-value">test02.jpg</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 크기</span><span class="image-test-summary-value">600 x 890px</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 기준</span><span class="image-test-summary-value">가로 600px 이상, 세로 750px 이상 / 20MB</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 결과</span><span class="image-test-summary-value image-test-status-pass">등록 가능</span></div>
+    </section>
+    <section class="image-test-grid" aria-label="test02 이미지 처리 결과">
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">원본 이미지</h2><span class="image-test-card-type">Original</span></div>
+        <div class="image-test-preview image-test-original"><img src="/test2_assets/test02.jpg" alt="test02 원본 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02.jpg</span><span><strong>파일 크기</strong> 600 x 890px</span><span><strong>처리 방식</strong> 원본 비율 유지, 현재 최소 기준 검증</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:300px; --display-height:375px"><img src="/test2_assets/test02-list.jpg" alt="test02 목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02-list.jpg</span><span><strong>파일 크기</strong> 300 x 445px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 300px 가로일 때 375px</span><span><strong>표시 방식</strong> 300 x 375px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:500px; --display-height:625px"><img src="/test2_assets/test02-detail.jpg" alt="test02 상세이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02-detail.jpg</span><span><strong>파일 크기</strong> 500 x 742px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 500px 가로일 때 625px</span><span><strong>표시 방식</strong> 500 x 625px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:50px; --display-height:63px"><img src="/test2_assets/test02-detail-list.jpg" alt="test02 상세목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02-detail-list.jpg</span><span><strong>파일 크기</strong> 50 x 74px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 50px 가로일 때 63px</span><span><strong>표시 방식</strong> 50 x 63px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">기타목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:80px; --display-height:100px"><img src="/test2_assets/test02-etc-list.jpg" alt="test02 기타목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02-etc-list.jpg</span><span><strong>파일 크기</strong> 80 x 119px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 80px 가로일 때 100px</span><span><strong>표시 방식</strong> 80 x 100px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">플랫폼용 이미지</h2><span class="image-test-card-type">Generated</span></div>
+        <div class="image-test-preview image-test-platform"><img src="/test2_assets/test02-platform.jpg" alt="test02 플랫폼용 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test02-platform.jpg</span><span><strong>파일 크기</strong> 700 x 1000px</span><span><strong>표시 방식</strong> object-fit 없이 생성 파일 그대로 표시</span></div>
+      </article>
+    </section>
+    <h2 class="image-test-example-title">예시 3: test03.jpg</h2>
+    <section class="image-test-panel image-test-summary" aria-label="test03 원본 검증 요약">
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 파일</span><span class="image-test-summary-value">test03.jpg</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">원본 크기</span><span class="image-test-summary-value">600 x 450px</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 기준</span><span class="image-test-summary-value">가로 600px 이상, 세로 750px 이상 / 20MB</span></div>
+      <div class="image-test-summary-item"><span class="image-test-summary-label">검증 결과</span><span class="image-test-summary-value image-test-status-fail">등록 불가</span></div>
+    </section>
+    <section class="image-test-grid" aria-label="test03 이미지 처리 결과">
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">원본 이미지</h2><span class="image-test-card-type">Original</span></div>
+        <div class="image-test-preview image-test-original"><img src="/test2_assets/test03.jpg" alt="test03 원본 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03.jpg</span><span><strong>파일 크기</strong> 600 x 450px</span><span><strong>처리 방식</strong> 원본 비율 유지, 현재 최소 기준 검증</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:300px; --display-height:375px"><img src="/test2_assets/test03-list.jpg" alt="test03 목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03-list.jpg</span><span><strong>파일 크기</strong> 300 x 225px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 300px 가로일 때 375px</span><span><strong>표시 방식</strong> 300 x 375px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:500px; --display-height:625px"><img src="/test2_assets/test03-detail.jpg" alt="test03 상세이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03-detail.jpg</span><span><strong>파일 크기</strong> 500 x 375px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 500px 가로일 때 625px</span><span><strong>표시 방식</strong> 500 x 625px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">상세목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:50px; --display-height:63px"><img src="/test2_assets/test03-detail-list.jpg" alt="test03 상세목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03-detail-list.jpg</span><span><strong>파일 크기</strong> 50 x 38px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 50px 가로일 때 63px</span><span><strong>표시 방식</strong> 50 x 63px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">기타목록이미지</h2><span class="image-test-card-type">Cover</span></div>
+        <div class="image-test-preview"><div class="image-test-display-box is-cover" style="--display-width:80px; --display-height:100px"><img src="/test2_assets/test03-etc-list.jpg" alt="test03 기타목록이미지"></div></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03-etc-list.jpg</span><span><strong>파일 크기</strong> 80 x 60px</span><span><strong>예상 세로</strong> 설정 원본 비율 기준 80px 가로일 때 100px</span><span><strong>표시 방식</strong> 80 x 100px 박스에 cover</span></div>
+      </article>
+      <article class="image-test-panel image-test-card">
+        <div class="image-test-card-head"><h2 class="image-test-card-title">플랫폼용 이미지</h2><span class="image-test-card-type">Generated</span></div>
+        <div class="image-test-preview image-test-platform"><img src="/test2_assets/test03-platform.jpg" alt="test03 플랫폼용 이미지"></div>
+        <div class="image-test-meta"><span><strong>저장명</strong> test03-platform.jpg</span><span><strong>파일 크기</strong> 700 x 1000px</span><span><strong>표시 방식</strong> object-fit 없이 생성 파일 그대로 표시</span></div>
+      </article>
+    </section>
+    <p class="image-test-note">현재 설정 기준으로 원본 최소 크기를 검증합니다. 썸네일 파일은 가로 기준으로 비율을 유지해 만들고, cover 항목의 화면 박스 세로는 상품등록 설정 화면과 같은 계산식인 썸네일 가로값 x (원본 최소 세로 / 원본 최소 가로)로 잡습니다.</p>
+  </main>
+</body>
+</html>

@@ -90,6 +90,7 @@ return function (App $app, ContainerInterface $container): void {
       $exceptionName = $inspector->getExceptionName();
       $exceptionMessage = $inspector->getExceptionMessage();
       $publicMessage = match ($statusCode) {
+        400, 401, 403 => $exceptionMessage,
         404 => 'Not found.',
         405 => 'not allowed.',
         default => $isDebug ? $exceptionMessage : 'An internal server error occurred.',
